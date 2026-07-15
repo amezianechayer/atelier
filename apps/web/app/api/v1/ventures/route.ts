@@ -4,6 +4,8 @@ import { desc, eq } from 'drizzle-orm';
 import { apiError, parseJsonBody, requireUser } from '@/lib/api';
 import { getDb } from '@/lib/db';
 import { getEnv } from '@/lib/env';
+import { inngest } from '@/lib/inngest';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: Request): Promise<Response> {
   const user = await requireUser(request);
@@ -60,6 +62,13 @@ export async function POST(request: Request): Promise<Response> {
     return venture;
   });
 
-  // TODO Phase 2 : émettre l'événement Inngest venture.created (onboarding SSE, SPEC.md §8.1).
-  return Response.json({ venture: created }, { status: 201 });
+  // Déclenche l'onboarding (SPEC.md §8.1) — traité par apps/worker.
+  let onboardingQueued = true;
+  try {
+    await inngest.send({ name: 'venture.created', data: { ventureId: created.id } });
+  } catch (err) {
+    onboardingQueued = false;
+    logger.error({ err, ventureId: created.id }, "échec d'émission de venture.created");
+  }
+  return Response.json({ venture: created, onboardingQueued }, { status: 201 });
 }

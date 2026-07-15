@@ -1,8 +1,37 @@
 /**
- * @atelier/agents-kit — runtime d'agents (Phase 2) : interfaces Agent/Toolbox (SPEC.md §7),
- * Model Router au-dessus du Vercel AI SDK (prix dans packages/config/prices.yaml, usage
- * normalisé -> recordUsage à CHAQUE appel), prompts, embeddings.
+ * @atelier/agents-kit — runtime d'agents (SPEC.md §7) : contrats Agent/Toolbox,
+ * model router sur Vercel AI SDK, outil web (allowlist en code), embeddings, prompts.
  */
 
-/** Rôles fixes de l'équipe v1 (SPEC.md §2.3). */
-export type AgentRole = 'ceo' | 'researcher' | 'builder' | 'marketer';
+export * from './agent';
+export {
+  createEmbedder,
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+  type Embedder,
+  type EmbedderOptions,
+} from './embeddings';
+export { ceoSystemPrompt, researcherSystemPrompt } from './prompts';
+export {
+  createModelRouter,
+  type GenerateInput,
+  type ModelRouter,
+  type ModelRouterConfig,
+  normalizeUsage,
+  type RouterRole,
+  type StreamInput,
+  type UsageEvent,
+} from './router';
+export {
+  createWebSearch,
+  type WebSearchFn,
+  type WebSearchOptions,
+} from './websearch';
+export {
+  createWebFetch,
+  htmlToText,
+  type UrlCheck,
+  validateFetchUrl,
+  type WebFetchFn,
+  type WebFetchOptions,
+} from './webtool';

@@ -36,6 +36,10 @@ export default async function VenturesPage() {
               <strong>{v.name}</strong>
               <span style={{ marginLeft: 8, color: '#666', fontSize: 13 }}>{v.status}</span>
               <p style={{ margin: '8px 0 0', color: '#444' }}>{v.pitch}</p>
+              <p style={{ margin: '10px 0 0', display: 'flex', gap: 16 }}>
+                <a href={`/ventures/${v.id}/chat`}>🧭 {t(L, 'app.openChat')}</a>
+                <a href={`/ventures/${v.id}/onboarding`}>✨ {t(L, 'app.openOnboarding')}</a>
+              </p>
             </li>
           ))}
         </ul>

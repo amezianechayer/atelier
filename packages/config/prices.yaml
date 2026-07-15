@@ -1,11 +1,22 @@
-# Prix des modèles LLM (USD par million de tokens), utilisés par le Model Router
-# pour le metering (recordUsage). Rempli en Phase 2 depuis la doc officielle du jour.
-# La date de relevé est OBLIGATOIRE : les prix périmés faussent le budget.
-#
-# as_of: YYYY-MM-DD
-# models:
-#   claude-sonnet-x:
-#     input_per_mtok: 0.00
-#     output_per_mtok: 0.00
-as_of: null
-models: {}
+# Prix des modèles (USD par million de tokens), utilisés par le Model Router pour le
+# metering (SPEC.md §7). La date de relevé est OBLIGATOIRE : des prix périmés faussent
+# le budget. Relevés sur la doc officielle Anthropic/OpenAI.
+# NOTE : claude-sonnet-5 est en promo (2/10) jusqu'au 2026-08-31 ; on facture au prix
+# catalogue (3/15) — surestimer protège le budget de l'utilisateur (ADR 0005).
+as_of: 2026-07-15
+models:
+  claude-sonnet-5:
+    input_per_mtok: 3.00
+    output_per_mtok: 15.00
+  claude-sonnet-4-6:
+    input_per_mtok: 3.00
+    output_per_mtok: 15.00
+  claude-haiku-4-5:
+    input_per_mtok: 1.00
+    output_per_mtok: 5.00
+  claude-opus-4-8:
+    input_per_mtok: 5.00
+    output_per_mtok: 25.00
+  text-embedding-3-small:
+    input_per_mtok: 0.02
+    output_per_mtok: 0.00

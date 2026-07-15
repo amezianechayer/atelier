@@ -9,12 +9,17 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@atelier/agents-kit": "workspace:*",
     "@atelier/config": "workspace:*",
     "@atelier/db": "workspace:*",
+    "@atelier/shared": "workspace:*",
     "@opentelemetry/api": "1.9.1",
     "@opentelemetry/exporter-trace-otlp-http": "0.220.0",
     "@opentelemetry/sdk-node": "0.220.0",
-    "pino": "10.3.1"
+    "drizzle-orm": "0.45.2",
+    "inngest": "4.12.1",
+    "pino": "10.3.1",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "26.1.1",

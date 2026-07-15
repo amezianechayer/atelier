@@ -22,10 +22,12 @@ export function CreateVentureForm() {
       body: JSON.stringify({ name, pitch }),
     });
     if (res.ok) {
+      const body = (await res.json()) as { venture: { id: string } };
       setName('');
       setPitch('');
       setState('idle');
-      router.refresh();
+      // L'écran qui vend le produit : direction l'onboarding en direct (SPEC.md §10).
+      router.push(`/ventures/${body.venture.id}/onboarding`);
     } else {
       const body = (await res.json().catch(() => null)) as {
         error?: { message?: string; hint?: string };
