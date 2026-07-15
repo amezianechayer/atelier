@@ -1,0 +1,10 @@
+{
+  "common.appName": "Atelier",
+  "common.tagline": "Your AI agent team. Your accounts, your budget, your call.",
+  "common.loading": "Loading…",
+  "common.approve": "Approve",
+  "common.reject": "Reject",
+  "error.generic": "Oops, something went wrong. Try again in a moment.",
+  "budget.remainingThisMonth": "AI budget left this month",
+  "approvals.pendingCount": "actions waiting for your approval"
+}

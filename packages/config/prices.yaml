@@ -1,0 +1,11 @@
+# Prix des modèles LLM (USD par million de tokens), utilisés par le Model Router
+# pour le metering (recordUsage). Rempli en Phase 2 depuis la doc officielle du jour.
+# La date de relevé est OBLIGATOIRE : les prix périmés faussent le budget.
+#
+# as_of: YYYY-MM-DD
+# models:
+#   claude-sonnet-x:
+#     input_per_mtok: 0.00
+#     output_per_mtok: 0.00
+as_of: null
+models: {}

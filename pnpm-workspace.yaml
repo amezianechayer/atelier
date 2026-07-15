@@ -1,0 +1,10 @@
+# templates/ est volontairement exclu : ce sont des gabarits copiés dans les
+# ventures des utilisateurs, pas des packages du workspace.
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  esbuild: true
+  sharp: true
+minimumReleaseAgeExclude:
+  - tsx@4.23.1

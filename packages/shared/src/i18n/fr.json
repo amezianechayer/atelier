@@ -1,0 +1,10 @@
+{
+  "common.appName": "Atelier",
+  "common.tagline": "Ton équipe d'agents IA. Tes comptes, ton budget, ton accord.",
+  "common.loading": "Chargement…",
+  "common.approve": "Approuver",
+  "common.reject": "Rejeter",
+  "error.generic": "Oups, quelque chose a coincé. Réessaie dans un instant.",
+  "budget.remainingThisMonth": "Budget IA restant ce mois",
+  "approvals.pendingCount": "actions en attente de ton accord"
+}
