@@ -10,6 +10,8 @@
  * - outreach  (Phase 5) : quotas par plan + suppression list non contournable
  */
 
+export { decryptSecret, type EncryptedSecret, encryptSecret } from './vault';
+
 /** Classe d'action (SPEC.md §2.5) : A réversible/privé, B visible/réversible, C irréversible/public. */
 export type ActionClass = 'A' | 'B' | 'C';
 

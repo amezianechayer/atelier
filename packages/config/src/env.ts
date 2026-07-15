@@ -28,10 +28,15 @@ export const envSchema = z.object({
   S3_SECRET_KEY: z.string().default('minioadmin'),
 
   BETTER_AUTH_SECRET: z.string().default(''),
+  BETTER_AUTH_URL: z.string().default('http://localhost:3000'),
   GOOGLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_SECRET: z.string().default(''),
 
   RESEND_API_KEY: z.string().default(''),
+  // Expéditeur des emails produit (magic links inclus).
+  EMAIL_FROM: z.string().default('Atelier <atelier@localhost>'),
+  // API HTTP de Mailpit, utilisée pour l'envoi d'emails en dev (ADR 0004).
+  MAILPIT_URL: z.string().default('http://localhost:8025'),
 
   ANTHROPIC_API_KEY: z.string().default(''),
   OPENAI_API_KEY: z.string().default(''),
@@ -63,7 +68,11 @@ export const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 /** Clés qui ne peuvent PAS retomber sur un défaut de dev en production. */
-const REQUIRED_IN_PRODUCTION = ['DATABASE_URL', 'SECRETS_MASTER_KEY'] as const;
+const REQUIRED_IN_PRODUCTION = [
+  'DATABASE_URL',
+  'SECRETS_MASTER_KEY',
+  'BETTER_AUTH_SECRET',
+] as const;
 
 /**
  * Charge et valide l'environnement. Crash immédiat avec message actionnable si invalide

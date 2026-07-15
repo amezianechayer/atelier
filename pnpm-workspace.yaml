@@ -4,7 +4,11 @@ packages:
   - apps/*
   - packages/*
 allowBuilds:
+  # Fallback pur JS suffisant ; on évite node-gyp sur les machines de dev.
+  cpu-features: false
   esbuild: true
+  protobufjs: false
   sharp: true
+  ssh2: false
 minimumReleaseAgeExclude:
   - tsx@4.23.1

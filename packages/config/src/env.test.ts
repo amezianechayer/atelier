@@ -35,13 +35,21 @@ describe('loadEnv', () => {
     );
   });
 
-  it('exige DATABASE_URL et SECRETS_MASTER_KEY explicites en production', () => {
+  it('exige DATABASE_URL, SECRETS_MASTER_KEY et BETTER_AUTH_SECRET explicites en production', () => {
     expect(() => loadEnv({ NODE_ENV: 'production' })).toThrowError(/production/);
     const key = randomBytes(32).toString('base64');
+    expect(() =>
+      loadEnv({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgres://prod:prod@db:5432/atelier',
+        SECRETS_MASTER_KEY: key,
+      }),
+    ).toThrowError(/BETTER_AUTH_SECRET/);
     const env = loadEnv({
       NODE_ENV: 'production',
       DATABASE_URL: 'postgres://prod:prod@db:5432/atelier',
       SECRETS_MASTER_KEY: key,
+      BETTER_AUTH_SECRET: randomBytes(32).toString('hex'),
     });
     expect(env.NODE_ENV).toBe('production');
   });
