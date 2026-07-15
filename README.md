@@ -5,8 +5,12 @@ business, une équipe d'agents IA la planifie, la construit, la marchande et l'o
 sur **tes** comptes (GitHub, Vercel, Resend), avec un budget IA plafonné et une file
 d'approbation pour toute action irréversible.
 
-La spécification complète vit dans [SPEC.md](SPEC.md). État actuel : **Phase 1
-(auth Google + magic link, coffre secrets AES-256-GCM, CRUD ventures, intégration GitHub)**.
+La spécification complète vit dans [SPEC.md](SPEC.md). État actuel : **Phase 2
+(agents CEO + Researcher, onboarding streamé en direct, chat, coût métré en temps réel)**.
+
+Décris ton idée en 3 lignes → en ~90 secondes ton équipe d'agents produit une étude de
+marché sourcée, un plan de lancement, la mémoire de la venture et un backlog de 10
+missions — coût IA affiché au centime près pendant que ça tourne.
 
 ## Quickstart (3 commandes)
 
@@ -30,7 +34,8 @@ node -e "console.log('BETTER_AUTH_SECRET='+require('crypto').randomBytes(32).toS
 
 Connexion : http://localhost:3000/login — magic link livré dans Mailpit (http://localhost:8025)
 en dev. Le bouton Google apparaît si `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` sont renseignés
-(voir docs/demo/phase-1.md).
+(voir docs/demo/phase-1.md). Les agents exigent `ANTHROPIC_API_KEY` dans `.env`
+(voir docs/demo/phase-2.md). UI Inngest : http://localhost:8288.
 
 - Web : http://localhost:3000 — healthcheck : http://localhost:3000/api/v1/healthz
 - Inngest dev server : http://localhost:8288
