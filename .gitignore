@@ -2,6 +2,7 @@ node_modules/
 dist/
 .next/
 .turbo/
+next-env.d.ts
 coverage/
 *.tsbuildinfo
 
@@ -11,3 +12,5 @@ coverage/
 
 .DS_Store
 Thumbs.db
+
+.claude/settings.local.json
