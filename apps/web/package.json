@@ -10,10 +10,19 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@atelier/config": "workspace:*",
+    "@atelier/core": "workspace:*",
+    "@atelier/db": "workspace:*",
+    "@atelier/integrations": "workspace:*",
     "@atelier/shared": "workspace:*",
+    "@better-auth/drizzle-adapter": "1.6.23",
+    "better-auth": "1.6.23",
+    "drizzle-orm": "0.45.2",
     "next": "16.2.10",
+    "pino": "10.3.1",
     "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.7",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "26.1.1",
