@@ -5,7 +5,8 @@ business, une équipe d'agents IA la planifie, la construit, la marchande et l'o
 sur **tes** comptes (GitHub, Vercel, Resend), avec un budget IA plafonné et une file
 d'approbation pour toute action irréversible.
 
-La spécification complète vit dans [SPEC.md](SPEC.md). État actuel : **Phase 0 (fondations)**.
+La spécification complète vit dans [SPEC.md](SPEC.md). État actuel : **Phase 1
+(auth Google + magic link, coffre secrets AES-256-GCM, CRUD ventures, intégration GitHub)**.
 
 ## Quickstart (3 commandes)
 
@@ -17,12 +18,19 @@ docker compose -f docker/compose.dev.yml up -d
 pnpm dev
 ```
 
-Puis, la première fois, applique les migrations :
+Puis, la première fois, applique les migrations et génère tes secrets locaux :
 
 ```bash
-cp .env.example .env        # les valeurs par défaut suffisent en dev
+cp .env.example .env
 pnpm db:migrate
+# coffre + auth (coller les sorties dans .env) :
+node -e "console.log('SECRETS_MASTER_KEY='+require('crypto').randomBytes(32).toString('base64'))"
+node -e "console.log('BETTER_AUTH_SECRET='+require('crypto').randomBytes(32).toString('hex'))"
 ```
+
+Connexion : http://localhost:3000/login — magic link livré dans Mailpit (http://localhost:8025)
+en dev. Le bouton Google apparaît si `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` sont renseignés
+(voir docs/demo/phase-1.md).
 
 - Web : http://localhost:3000 — healthcheck : http://localhost:3000/api/v1/healthz
 - Inngest dev server : http://localhost:8288

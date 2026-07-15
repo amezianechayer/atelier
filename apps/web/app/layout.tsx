@@ -10,7 +10,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang={DEFAULT_LOCALE}>
-      <body>{children}</body>
+      {/* Thème clair forcé en v1 ; thématisation complète en Phase 8. */}
+      <body
+        style={{
+          background: '#fff',
+          color: '#111',
+          fontFamily: 'system-ui, sans-serif',
+          margin: 0,
+        }}
+      >
+        {children}
+      </body>
     </html>
   );
 }

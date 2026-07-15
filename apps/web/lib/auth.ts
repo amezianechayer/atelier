@@ -26,8 +26,8 @@ export const auth = betterAuth({
     usePlural: true,
     schema: { users, sessions, accounts, verifications },
   }),
+  // usePlural mappe déjà user -> users ; ne PAS ajouter modelName (double pluriel).
   user: {
-    modelName: 'users',
     fields: { name: 'displayName' },
   },
   // Google seulement si les identifiants OAuth sont fournis (SPEC.md §2.1).

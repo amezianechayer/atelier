@@ -1,10 +1,11 @@
-import { loadEnv } from '@atelier/config';
+import { loadDotEnv, loadEnv } from '@atelier/config';
 import { pino } from 'pino';
 import { startOtel } from './otel';
 
 const logger = pino({ name: 'atelier-worker' });
 
 // Crash immédiat si l'environnement est invalide (SPEC.md §15.7).
+loadDotEnv();
 const env = loadEnv();
 await startOtel(env);
 
