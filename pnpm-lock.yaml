@@ -173,7 +173,17 @@ importers:
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(tsx@4.23.1)(yaml@2.9.0))
 
   packages/core:
+    dependencies:
+      '@atelier/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: 0.45.2
+        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(pg@8.22.0)
     devDependencies:
+      '@testcontainers/postgresql':
+        specifier: 12.0.4
+        version: 12.0.4
       '@types/node':
         specifier: 26.1.1
         version: 26.1.1
@@ -193,9 +203,6 @@ importers:
         specifier: 8.22.0
         version: 8.22.0
     devDependencies:
-      '@atelier/core':
-        specifier: workspace:*
-        version: link:../core
       '@testcontainers/postgresql':
         specifier: 12.0.4
         version: 12.0.4

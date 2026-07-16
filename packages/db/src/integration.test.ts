@@ -1,16 +1,15 @@
 /**
  * Tests d'intégration sur un vrai Postgres 16 + pgvector (Testcontainers) :
- * migrations complètes, roundtrip du coffre AES-GCM en base, trigger append-only du ledger.
+ * migrations complètes et trigger append-only du ledger. (Le roundtrip du coffre
+ * en base vit dans packages/core/src/trust.integration.test.ts.)
  */
-import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { decryptSecret, encryptSecret } from '@atelier/core';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { eq, sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDb, type Db } from './client';
-import { ledgerEvents, secrets, users, ventures } from './schema';
+import { ledgerEvents, users, ventures } from './schema';
 
 const MIGRATIONS_FOLDER = fileURLToPath(new URL('../migrations', import.meta.url));
 
@@ -46,36 +45,6 @@ describe('migrations sur base vierge', () => {
       sql`SELECT indexname FROM pg_indexes WHERE indexname = 'idx_memory_chunks_embedding_hnsw'`,
     );
     expect(idx.rows).toHaveLength(1);
-  });
-});
-
-describe('coffre secrets en base (acceptation Phase 1)', () => {
-  it('chiffre, stocke, relit et déchiffre un token', async () => {
-    const masterKey = randomBytes(32).toString('base64');
-    const token = 'ghp_token_de_test_0123456789abcdef';
-
-    const [user] = await db
-      .insert(users)
-      .values({ email: 'coffre@test.local' })
-      .returning({ id: users.id });
-    expect(user).toBeDefined();
-    if (!user) return;
-
-    const sealed = encryptSecret(masterKey, token);
-    const [stored] = await db
-      .insert(secrets)
-      .values({ userId: user.id, ciphertext: sealed.ciphertext, nonce: sealed.nonce })
-      .returning({ id: secrets.id });
-    expect(stored).toBeDefined();
-    if (!stored) return;
-
-    const [row] = await db.select().from(secrets).where(eq(secrets.id, stored.id));
-    expect(row).toBeDefined();
-    if (!row) return;
-
-    expect(decryptSecret(masterKey, { ciphertext: row.ciphertext, nonce: row.nonce })).toBe(token);
-    // Le clair n'apparaît nulle part en base.
-    expect(row.ciphertext.includes(Buffer.from(token))).toBe(false);
   });
 });
 
