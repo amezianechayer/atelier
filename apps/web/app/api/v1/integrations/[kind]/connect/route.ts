@@ -1,27 +1,51 @@
 import { encryptSecret } from '@atelier/core';
 import { integrations, secrets } from '@atelier/db';
-import { connectGithubInputSchema } from '@atelier/shared';
+import { connectGithubInputSchema, connectVercelInputSchema } from '@atelier/shared';
 import { apiError, parseJsonBody, requireUser } from '@/lib/api';
 import { getDb } from '@/lib/db';
 import { getEnv } from '@/lib/env';
 import { logger } from '@/lib/logger';
 
+/**
+ * Connexion d'une intégration DE L'UTILISATEUR par token (SPEC.md §11). Le token est
+ * validé auprès du service puis chiffré AES-256-GCM ; config ne contient jamais de secret.
+ */
+
 type RouteContext = { params: Promise<{ kind: string }> };
 
-/** Vérifie le token auprès de GitHub et récupère le login (jamais stocké en clair). */
-async function validateGithubToken(
+async function validateGithub(
   token: string,
-): Promise<{ login: string; githubUserId: number } | null> {
-  const res = await fetch('https://api.github.com/user', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      'User-Agent': 'atelier-app',
-    },
+  repo: string | undefined,
+): Promise<{ config: Record<string, unknown> } | null> {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'atelier-app',
+  };
+  const res = await fetch('https://api.github.com/user', { headers });
+  if (!res.ok) return null;
+  const user = (await res.json()) as { login?: string; id?: number };
+  if (!user.login || !user.id) return null;
+
+  // Repo optionnel : on vérifie qu'il existe et est accessible en écriture.
+  if (repo) {
+    const repoRes = await fetch(`https://api.github.com/repos/${repo}`, { headers });
+    if (!repoRes.ok) return null;
+    const r = (await repoRes.json()) as { full_name?: string; permissions?: { push?: boolean } };
+    if (!r.full_name || !r.permissions?.push) return null;
+    return { config: { login: user.login, githubUserId: user.id, repo: r.full_name } };
+  }
+  return { config: { login: user.login, githubUserId: user.id } };
+}
+
+async function validateVercel(token: string): Promise<{ config: Record<string, unknown> } | null> {
+  const res = await fetch('https://api.vercel.com/v2/user', {
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) return null;
-  const body = (await res.json()) as { login?: string; id?: number };
-  return body.login && body.id ? { login: body.login, githubUserId: body.id } : null;
+  const body = (await res.json()) as { user?: { username?: string; email?: string } };
+  if (!body.user) return null;
+  return { config: { username: body.user.username ?? body.user.email ?? '' } };
 }
 
 export async function POST(request: Request, context: RouteContext): Promise<Response> {
@@ -29,12 +53,12 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
   if (user instanceof Response) return user;
 
   const { kind } = await context.params;
-  if (kind !== 'github') {
+  if (kind !== 'github' && kind !== 'vercel') {
     return apiError(
       400,
       'unsupported_integration',
       `L'intégration « ${kind} » n'est pas encore disponible.`,
-      'En v1, seule github est connectable par token.',
+      'En v1 : github et vercel sont connectables par token.',
     );
   }
 
@@ -48,31 +72,32 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
     );
   }
 
-  const input = await parseJsonBody(request, connectGithubInputSchema);
+  const schema = kind === 'github' ? connectGithubInputSchema : connectVercelInputSchema;
+  const input = await parseJsonBody(request, schema);
   if (input instanceof Response) return input;
 
-  let github: Awaited<ReturnType<typeof validateGithubToken>>;
+  let validated: { config: Record<string, unknown> } | null;
   try {
-    github = await validateGithubToken(input.token);
+    const repo = (input as { repo?: string }).repo;
+    validated =
+      kind === 'github'
+        ? await validateGithub(input.token, repo)
+        : await validateVercel(input.token);
   } catch (err) {
-    logger.error({ err }, 'GitHub injoignable pendant la validation du token');
-    return apiError(
-      502,
-      'github_unreachable',
-      'GitHub est injoignable pour le moment.',
-      'Réessaie dans quelques instants.',
-    );
+    logger.error({ err, kind }, 'service injoignable pendant la validation du token');
+    return apiError(502, 'service_unreachable', `${kind} est injoignable pour le moment.`);
   }
-  if (!github) {
+  if (!validated) {
     return apiError(
       422,
       'invalid_token',
-      'GitHub a refusé ce token.',
-      'Génère un token (classic ou fine-grained) avec le scope repo, puis réessaie.',
+      `${kind} a refusé ce token (ou le repo est inaccessible en écriture).`,
+      kind === 'github'
+        ? 'Token avec scope repo, et repo « owner/name » où tu as les droits de push.'
+        : 'Génère un token Vercel valide, puis réessaie.',
     );
   }
 
-  // Le token part chiffré AES-256-GCM ; config ne contient JAMAIS de secret (SPEC.md §6).
   const sealed = encryptSecret(env.SECRETS_MASTER_KEY, input.token);
   const created = await getDb().transaction(async (tx) => {
     const [secret] = await tx
@@ -84,8 +109,8 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
       .insert(integrations)
       .values({
         userId: user.id,
-        kind: 'github',
-        config: { login: github.login, githubUserId: github.githubUserId },
+        kind,
+        config: validated.config,
         secretId: secret.id,
       })
       .returning({

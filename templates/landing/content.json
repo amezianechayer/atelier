@@ -1,0 +1,13 @@
+{
+  "_comment": "Contenu de la landing. Le Builder (Claude Code headless) réécrit CE fichier selon la mémoire de la venture — il ne touche pas au code React. Aperçu fidèle garanti.",
+  "brandName": "Ta Venture",
+  "tagline": "La promesse de ton produit, en une phrase qui donne envie.",
+  "subtitle": "Explique en deux lignes à qui tu t'adresses et le problème que tu résous.",
+  "ctaLabel": "Rejoindre la liste d'attente",
+  "bullets": [
+    "Un premier bénéfice concret et mesurable.",
+    "Un deuxième, qui lève une objection.",
+    "Un troisième, qui crée l'urgence."
+  ],
+  "footerNote": "assisté par IA"
+}

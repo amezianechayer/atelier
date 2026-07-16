@@ -1,12 +1,19 @@
 import { appendEvent } from '@atelier/core';
 import { actions, missions, usageRecords, ventures } from '@atelier/db';
 import { and, eq, sql } from 'drizzle-orm';
+import { proposeAction } from '../actions';
+import { runLandingBuilder } from '../agents/builder';
 import { executeMissionAgent } from '../agents/mission-agent';
 import { findExecutor } from '../executors';
 import { createDeltaBuffer, publish } from '../notify';
 import { BudgetExceededError, getRuntime } from '../runtime';
 import { buildToolbox } from '../toolbox';
 import { inngest } from './client';
+
+/** Nom de projet Vercel stable par venture (préversion et prod pointent le même projet). */
+function projectNameFor(ventureId: string): string {
+  return `atelier-${ventureId.slice(0, 8)}`;
+}
 
 /**
  * mission/run (SPEC.md §8.2) : contexte -> budget -> agent (usage métré, coupure
@@ -102,6 +109,39 @@ export const missionRun = inngest.createFunction(
         publish(db, ventureId, { type: 'mission.delta', missionId, text }),
       );
       try {
+        if (loaded.agentRole === 'builder') {
+          // Builder (SPEC.md §8.2) : Claude Code headless en sandbox -> deploy_preview (B)
+          // + deploy_prod (C). Les fichiers voyagent dans le payload (aperçu fidèle).
+          const built = await runLandingBuilder({
+            rt,
+            ventureId,
+            missionId,
+            ventureName: loaded.ventureName,
+            pitch: loaded.pitch,
+            onDelta: (t) => buffer.push(t),
+          });
+          await buffer.end();
+          const projectName = projectNameFor(ventureId);
+          const deployPayload = {
+            files: built.files,
+            projectName,
+            branch: 'atelier/landing',
+            commitMessage: `Landing « ${loaded.ventureName} » par Atelier`,
+          };
+          await proposeAction(rt, {
+            ventureId,
+            missionId,
+            kind: 'deploy_preview',
+            payload: deployPayload,
+          });
+          await proposeAction(rt, {
+            ventureId,
+            missionId,
+            kind: 'deploy_prod',
+            payload: deployPayload,
+          });
+          return { killed: false as const, summary: built.summary };
+        }
         const result = await executeMissionAgent({
           ctx: { ventureId, ventureName: loaded.ventureName, pitch: loaded.pitch, locale: 'fr' },
           mission: { id: missionId, ...loaded },
@@ -126,6 +166,49 @@ export const missionRun = inngest.createFunction(
       }
     });
     if (execution.killed) return { missionId, status: 'budget_exceeded' };
+
+    // Auto-exécution des actions sans approbation (classe A/B : deploy_preview auto + notif).
+    await step.run('auto-executer', async () => {
+      const autoActions = await db
+        .select()
+        .from(actions)
+        .where(
+          and(
+            eq(actions.missionId, missionId),
+            eq(actions.status, 'pending'),
+            eq(actions.requiresApproval, false),
+          ),
+        );
+      for (const action of autoActions) {
+        const executor = findExecutor(action.kind);
+        if (!executor) {
+          // Classe A (brouillon) : proposée, rien à exécuter côté serveur.
+          await db
+            .update(actions)
+            .set({ status: 'auto_executed' })
+            .where(eq(actions.id, action.id));
+          continue;
+        }
+        const receipt = await executor.execute(action, rt);
+        await db
+          .update(actions)
+          .set({ status: 'auto_executed', executedAt: new Date() })
+          .where(and(eq(actions.id, action.id), eq(actions.status, 'pending')));
+        await appendEvent(db, ventureId, 'action_executed', {
+          actionId: action.id,
+          kind: action.kind,
+          auto: true,
+          receipt: { summary: receipt.summary, externalUrl: receipt.externalUrl ?? null },
+        });
+        await publish(db, ventureId, {
+          type: 'action.executed',
+          actionId: action.id,
+          kind: action.kind,
+          summary: receipt.summary,
+          externalUrl: receipt.externalUrl,
+        });
+      }
+    });
 
     // Actions C en attente -> la mission attend les décisions (72 h max chacune).
     const pendingC = await step.run('lister-actions-c', async () => {
@@ -182,7 +265,7 @@ export const missionRun = inngest.createFunction(
         if (!executor) {
           throw new Error(`aucun ActionExecutor pour « ${action.kind} »`);
         }
-        const receipt = await executor.execute(action, { db });
+        const receipt = await executor.execute(action, rt);
         await db
           .update(actions)
           .set({ status: 'executed', executedAt: new Date() })

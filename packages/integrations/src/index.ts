@@ -14,3 +14,10 @@ export {
   type EmailSender,
   type SendEmailInput,
 } from './email';
+export { type GithubRepoRef, getGithubUser, pushFiles } from './github';
+export {
+  createDeployment,
+  pollDeployment,
+  type VercelDeployInput,
+  type VercelDeployment,
+} from './vercel';

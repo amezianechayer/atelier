@@ -43,12 +43,27 @@ export const ventureSchema = z.object({
 });
 export type Venture = z.infer<typeof ventureSchema>;
 
-/** Connexion d'une intégration par token (GitHub en v1, SPEC.md §16 Phase 1). */
+/** Connexion d'une intégration par token (SPEC.md §16 Phase 1/4). */
 export const connectGithubInputSchema = z.object({
   token: z
     .string()
     .trim()
     .min(20, 'ce token semble trop court')
     .max(255, 'ce token semble trop long'),
+  /** Repo cible « owner/name » où le Builder pousse (Phase 4). Optionnel. */
+  repo: z
+    .string()
+    .trim()
+    .regex(/^[\w.-]+\/[\w.-]+$/, 'format attendu : owner/name')
+    .optional(),
 });
 export type ConnectGithubInput = z.infer<typeof connectGithubInputSchema>;
+
+export const connectVercelInputSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .min(20, 'ce token semble trop court')
+    .max(255, 'ce token semble trop long'),
+});
+export type ConnectVercelInput = z.infer<typeof connectVercelInputSchema>;
