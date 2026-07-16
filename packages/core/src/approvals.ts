@@ -2,7 +2,27 @@
  * Classification A/B/C des actions (SPEC.md §2.5, §7) — appliquée EN CODE, jamais une
  * décision du modèle. Fail-closed partout : tout cas ambigu exige une approbation.
  */
+import type { actions, Db } from '@atelier/db';
 import type { ActionClass } from './index';
+
+/** Ligne de la table actions (aperçu fidèle : le payload est le contenu exécutable exact). */
+export type ActionRow = typeof actions.$inferSelect;
+
+export interface ExecutorDeps {
+  db: Db;
+}
+
+export interface ExecutionReceipt {
+  summary: string;
+  externalUrl?: string;
+}
+
+/** Exécution idempotente d'une action décidée, via le handler d'intégration (SPEC.md §7). */
+export interface ActionExecutor {
+  canHandle(kind: string): boolean;
+  execute(a: ActionRow, deps: ExecutorDeps): Promise<ExecutionReceipt>;
+  undo?(a: ActionRow, deps: ExecutorDeps): Promise<void>; // dépublier, rollback deploy
+}
 
 export type ActionKind =
   | 'draft_post'

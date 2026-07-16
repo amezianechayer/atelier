@@ -11,12 +11,16 @@
  */
 
 export {
+  type ActionExecutor,
   type ActionKind,
+  type ActionRow,
   type AutonomySetting,
   type ClassifyResult,
   type Counters,
   classify,
   DEFAULT_UNDO_WINDOW_MS,
+  type ExecutionReceipt,
+  type ExecutorDeps,
 } from './approvals';
 export { recordUsage, type UsageInput, type UsageOutcome } from './budget';
 export {

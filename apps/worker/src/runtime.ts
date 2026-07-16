@@ -8,8 +8,19 @@ import {
 } from '@atelier/agents-kit';
 import { type Env, loadDotEnv, loadEnv } from '@atelier/config';
 import { computeCostUsd, loadPrices } from '@atelier/config/prices';
-import { createDb, type Db, usageRecords } from '@atelier/db';
+import { recordUsage as coreRecordUsage } from '@atelier/core';
+import { createDb, type Db } from '@atelier/db';
 import { publish } from './notify';
+
+/** Levée quand recordUsage signale hardExceeded : l'appelant DOIT annuler la mission. */
+export class BudgetExceededError extends Error {
+  constructor(public readonly remainingMonthUsd: number) {
+    super(
+      `Budget IA épuisé (reste ${remainingMonthUsd.toFixed(4)} $ ce mois) : exécution coupée net.`,
+    );
+    this.name = 'BudgetExceededError';
+  }
+}
 
 /** Modèle par rôle — décision ADR 0005, ajustable par le fondateur. */
 export const MODELS: Record<RouterRole, string> = {
@@ -61,15 +72,24 @@ export function getRuntime(): Runtime {
     computeCostUsd(prices, model, input, output);
 
   async function recordUsage(ventureId: string, usage: UsageEvent, missionId?: string) {
-    await db.insert(usageRecords).values({
+    // Compteur électrique (SPEC.md §7) : persiste ET vérifie le plafond à CHAQUE appel.
+    const outcome = await coreRecordUsage(db, {
       ventureId,
-      missionId: missionId ?? null,
+      ...(missionId ? { missionId } : {}),
       model: usage.model,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
-      costUsd: usage.costUsd.toFixed(6),
+      costUsd: usage.costUsd,
     });
-    await publish(db, ventureId, { type: 'usage', costUsd: usage.costUsd, model: usage.model });
+    await publish(db, ventureId, {
+      type: 'usage',
+      costUsd: usage.costUsd,
+      model: usage.model,
+      remainingMonthUsd: outcome.remainingMonthUsd,
+    });
+    if (outcome.hardExceeded) {
+      throw new BudgetExceededError(outcome.remainingMonthUsd);
+    }
   }
 
   cached = {

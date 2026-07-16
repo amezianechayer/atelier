@@ -51,5 +51,20 @@
   "chat.send": "Envoyer",
   "chat.thinking": "Le CEO écrit…",
   "chat.empty": "Dis bonjour à ton CEO : il connaît déjà ton plan et ta mémoire.",
-  "common.backToVentures": "← Mes ventures"
+  "common.backToVentures": "← Mes ventures",
+  "app.openMissions": "Missions",
+  "app.openActions": "Approbations",
+  "missions.title": "Missions",
+  "missions.subtitle": "Chaque mission affiche son coût réel. Les actions irréversibles passent par ta file d'approbation.",
+  "missions.run": "Lancer",
+  "missions.running": "En cours…",
+  "missions.empty": "Pas encore de missions — l'onboarding en crée un backlog.",
+  "missions.cost": "coût",
+  "actions.title": "File d'approbation",
+  "actions.subtitle": "Rien ne part sans ton accord — voici EXACTEMENT ce qui sera exécuté.",
+  "actions.empty": "Aucune action en attente de ton accord. 😌",
+  "actions.pendingSection": "En attente de ton accord",
+  "actions.historySection": "Historique",
+  "actions.classLabel": "classe",
+  "actions.error": "La décision a échoué. Réessaie."
 }

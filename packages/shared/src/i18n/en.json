@@ -51,5 +51,20 @@
   "chat.send": "Send",
   "chat.thinking": "The CEO is writing…",
   "chat.empty": "Say hi to your CEO: they already know your plan and memory.",
-  "common.backToVentures": "← My ventures"
+  "common.backToVentures": "← My ventures",
+  "app.openMissions": "Missions",
+  "app.openActions": "Approvals",
+  "missions.title": "Missions",
+  "missions.subtitle": "Every mission shows its real cost. Irreversible actions go through your approval queue.",
+  "missions.run": "Run",
+  "missions.running": "Running…",
+  "missions.empty": "No missions yet — onboarding creates your backlog.",
+  "missions.cost": "cost",
+  "actions.title": "Approval queue",
+  "actions.subtitle": "Nothing goes out without your call — this is EXACTLY what will run.",
+  "actions.empty": "Nothing waiting for your approval. 😌",
+  "actions.pendingSection": "Waiting for your call",
+  "actions.historySection": "History",
+  "actions.classLabel": "class",
+  "actions.error": "The decision failed. Try again."
 }

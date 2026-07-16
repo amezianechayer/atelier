@@ -1,13 +1,18 @@
 import type { MemoryDoc, Toolbox } from '@atelier/agents-kit';
 import { integrations, memoryDocs, ventures } from '@atelier/db';
 import { and, desc, eq } from 'drizzle-orm';
+import { proposeAction } from './actions';
 import type { Runtime } from './runtime';
 
 /**
- * Toolbox branchée sur la base (SPEC.md §7). Les agents proposent, le code décide :
- * actions.propose est volontairement bloqué jusqu'à la couche de confiance (Phase 3).
+ * Toolbox branchée sur la base (SPEC.md §7). Les agents PROPOSENT, le code classifie
+ * et l'utilisateur décide (couche de confiance, Phase 3).
  */
-export function buildToolbox(rt: Runtime, ventureId: string): Toolbox {
+export function buildToolbox(
+  rt: Runtime,
+  ventureId: string,
+  opts: { missionId?: string } = {},
+): Toolbox {
   const { db } = rt;
 
   async function latestDoc(slug: string): Promise<MemoryDoc | undefined> {
@@ -54,10 +59,11 @@ export function buildToolbox(rt: Runtime, ventureId: string): Toolbox {
       },
     },
     actions: {
-      async propose() {
-        throw new Error(
-          "actions.propose arrive en Phase 3 (couche de confiance : classify + file d'approbation).",
-        );
+      async propose(kind, payload) {
+        if (!opts.missionId) {
+          throw new Error('actions.propose exige un contexte de mission (SPEC.md §8.2).');
+        }
+        return proposeAction(rt, { ventureId, missionId: opts.missionId, kind, payload });
       },
     },
     integrations: {

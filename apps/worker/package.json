@@ -11,6 +11,7 @@
   "dependencies": {
     "@atelier/agents-kit": "workspace:*",
     "@atelier/config": "workspace:*",
+    "@atelier/core": "workspace:*",
     "@atelier/db": "workspace:*",
     "@atelier/shared": "workspace:*",
     "@opentelemetry/api": "1.9.1",

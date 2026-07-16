@@ -90,6 +90,9 @@ importers:
       '@atelier/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@atelier/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@atelier/db':
         specifier: workspace:*
         version: link:../../packages/db
