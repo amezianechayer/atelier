@@ -129,9 +129,25 @@ function parseStreamLine(line: string, emit: (e: SandboxEvent) => void): ClaudeR
   return null;
 }
 
+/** Exécute une commande dans un conteneur et attend sa fin (helper seed/extract). */
+async function execWait(container: Docker.Container, cmd: string[]): Promise<void> {
+  const exec = await container.exec({ Cmd: cmd, AttachStdout: true, AttachStderr: true });
+  const stream = await exec.start({ hijack: true, stdin: false });
+  await new Promise<void>((resolve, reject) => {
+    stream.on('end', resolve);
+    stream.on('error', reject);
+    stream.resume();
+  });
+}
+
 /**
  * Exécute le Builder : injecte `template` dans /workspace, lance Claude Code headless
  * avec `prompt`, récupère les fichiers modifiés et le coût réel.
+ *
+ * /workspace est un VOLUME nommé (pas un tmpfs) : Docker refuse `putArchive` dans un
+ * conteneur à rootfs read-only. Un conteneur helper root (réseau `none`) seede et extrait
+ * le volume ; le conteneur durci (rootfs RO) ne fait QUE monter ce volume. On honore ainsi
+ * « rootfs read-only sauf /workspace » (SPEC.md §11).
  */
 export async function runBuilderSandbox(input: {
   image: string;
@@ -144,6 +160,23 @@ export async function runBuilderSandbox(input: {
   const d = getDocker();
   const timeoutMs = input.timeoutMs ?? 300_000;
   await ensureEgress(input.image);
+
+  const volumeName = `atelier-ws-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  await d.createVolume({ Name: volumeName });
+
+  // Helper root, isolé du réseau : seed le template puis, en fin de course, extrait.
+  const helper = await d.createContainer({
+    Image: input.image,
+    User: '0',
+    Cmd: ['sleep', String(Math.ceil(timeoutMs / 1000) + 120)],
+    HostConfig: {
+      NetworkMode: 'none',
+      Binds: [`${volumeName}:/workspace`],
+      Memory: 256 * 1024 * 1024,
+      PidsLimit: 64,
+      AutoRemove: false,
+    },
+  });
 
   const container = await d.createContainer({
     Image: input.image,
@@ -164,8 +197,8 @@ export async function runBuilderSandbox(input: {
     HostConfig: {
       NetworkMode: INTERNAL_NET,
       ReadonlyRootfs: true,
+      Binds: [`${volumeName}:/workspace`],
       Tmpfs: {
-        '/workspace': 'rw,size=256m,mode=1777',
         '/tmp': 'rw,size=64m,mode=1777',
         '/home/builder': 'rw,size=128m,mode=1777',
       },
@@ -183,8 +216,12 @@ export async function runBuilderSandbox(input: {
   }, timeoutMs);
 
   try {
+    // Seed : template dans le volume, puis ownership au user builder (le volume neuf est root).
+    await helper.start();
+    await helper.putArchive(filesToTar(input.template), { path: '/workspace' });
+    await execWait(helper, ['chown', '-R', 'builder:builder', '/workspace']);
+
     await container.start();
-    await container.putArchive(filesToTar(input.template), { path: '/workspace' });
 
     const exec = await container.exec({
       Cmd: [
@@ -230,8 +267,8 @@ export async function runBuilderSandbox(input: {
     });
     await Promise.allSettled(events);
 
-    // Récupère le workspace personnalisé.
-    const tarStream = await container.getArchive({ path: '/workspace' });
+    // Récupère le workspace personnalisé via le helper (le conteneur durci reste RO).
+    const tarStream = await helper.getArchive({ path: '/workspace' });
     const files = await tarToFiles(tarStream as unknown as NodeJS.ReadableStream, {
       stripPrefix: 'workspace/',
     });
@@ -262,5 +299,10 @@ export async function runBuilderSandbox(input: {
   } finally {
     clearTimeout(hardKill);
     await container.remove({ force: true }).catch(() => {});
+    await helper.remove({ force: true }).catch(() => {});
+    await d
+      .getVolume(volumeName)
+      .remove({ force: true })
+      .catch(() => {});
   }
 }
