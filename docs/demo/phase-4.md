@@ -66,6 +66,32 @@ Mesures relevées (2026-07-16, venture « PawPlanner ») :
 | Push GitHub (repo vide amorcé via Contents API puis Git Data API) | commit réel sur la branche `atelier/landing` |
 | Déploiement préversion Vercel (fichiers inline, framework nextjs) | état **READY**, URL réelle servie |
 
+## Run complet mesuré (2026-07-16, « PawPlanner », bout en bout via l'app)
+
+Connexion des intégrations en dev (équivalent du flux Réglages) :
+
+```bash
+GH_TOKEN=ghp_... VERCEL_TOKEN=vcp_... GH_REPO=owner/name VENTURE=<VID> \
+  pnpm --filter worker exec tsx scripts/seed-integrations.ts
+```
+
+| Critère d'acceptation | Résultat |
+| --- | --- |
+| « crée ma landing » → URL de préversion réelle | ✅ Vercel **READY** `https://atelier-…-lljxm4ujz-…vercel.app` (auto classe B, ~170 s build inclus) |
+| Approbation en un tap → déploiement prod | ✅ production **READY** `https://atelier-…-5kaftptoo-…vercel.app` |
+| Repo visible sur le GitHub de test | ✅ `amezianechayer/jetable-` : branches `atelier/landing` + `main` ; `content.json` sur main → brandName « PawPlanner » |
+| Ledger complet | ✅ queued → running → deploy_preview créée → deploy_preview exécutée → awaiting_approval → deploy_prod exécutée → done |
+| Intégrité | ✅ `POST /ledger/verify` → `{ "ok": true }` |
+
+**Résilience** : `deploy_preview` déploie la préversion Vercel **même si le push GitHub
+échoue** (panne transitoire), avec note remontée — le livrable n'est pas bloqué par un
+incident externe ; `deploy_prod` reste l'étape gated. Éprouvé pendant une panne GitHub
+réelle le 2026-07-16.
+
+**Protection Vercel** : si « Vercel Authentication » est activée sur le projet, les
+**préversions** exigent une connexion Vercel pour être vues publiquement ; la **production**
+est publique par défaut (désactivable dans Settings → Deployment Protection).
+
 ## Sécurité vérifiée (SPEC §11)
 
 - La sandbox ne reçoit QUE `ANTHROPIC_API_KEY` : aucun token GitHub/Vercel n'y entre
@@ -76,7 +102,7 @@ Mesures relevées (2026-07-16, venture « PawPlanner ») :
 
 ## Critères d'acceptation Phase 4
 
-- [ ] « crée ma landing » → URL de préversion réelle sur le Vercel de test
-- [ ] Après approbation → déploiement production sur le Vercel de test
-- [ ] Repo visible sur le GitHub de test (landing personnalisée)
-- [ ] Ledger complet du flux (sandbox → preview → approbation → prod), verifyChain ok
+- [x] « crée ma landing » → URL de préversion réelle sur le Vercel de test
+- [x] Après approbation → déploiement production sur le Vercel de test
+- [x] Repo visible sur le GitHub de test (landing personnalisée)
+- [x] Ledger complet du flux (sandbox → preview → approbation → prod), verifyChain ok
