@@ -3,6 +3,7 @@ import { actions, missions, usageRecords, ventures } from '@atelier/db';
 import { and, eq, sql } from 'drizzle-orm';
 import { proposeAction } from '../actions';
 import { runLandingBuilder } from '../agents/builder';
+import { runMarketer } from '../agents/marketer';
 import { executeMissionAgent } from '../agents/mission-agent';
 import { findExecutor } from '../executors';
 import { createDeltaBuffer, publish } from '../notify';
@@ -141,6 +142,21 @@ export const missionRun = inngest.createFunction(
             payload: deployPayload,
           });
           return { killed: false as const, summary: built.summary };
+        }
+        if (loaded.agentRole === 'marketer') {
+          // Marketer (SPEC.md §8.4) : 3 posts (publish_post C) OU séquence email
+          // (send_email_batch C). Tout part en file d'approbation.
+          const done = await runMarketer({
+            rt,
+            ventureId,
+            missionId,
+            ventureName: loaded.ventureName,
+            pitch: loaded.pitch,
+            instruction: loaded.instruction,
+            onDelta: (t) => buffer.push(t),
+          });
+          await buffer.end();
+          return { killed: false as const, summary: done.summary };
         }
         const result = await executeMissionAgent({
           ctx: { ventureId, ventureName: loaded.ventureName, pitch: loaded.pitch, locale: 'fr' },

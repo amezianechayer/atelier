@@ -1,11 +1,15 @@
 import type { ActionRow, ExecutionReceipt } from '@atelier/core';
 import {
+  bufferPublishHint,
   createDeployment,
   type GithubRepoRef,
   pollDeployment,
+  publishToBuffer,
   pushFiles,
+  type SocialPost,
 } from '@atelier/integrations';
 import { loadIntegrationToken } from './integrations-token';
+import { type EmailBatchPayload, sendEmailBatch } from './outreach-send';
 import type { Runtime } from './runtime';
 
 /**
@@ -134,22 +138,65 @@ const deployProd: WorkerExecutor = {
   },
 };
 
-/** publish_post factice (Phase 3) — remplacé par Buffer/Resend réels en Phase 5. */
-const fakePublishPost: WorkerExecutor = {
+/** publish_post (classe C) : Buffer si connecté, sinon repli « copier le post » (SPEC.md §5). */
+const publishPost: WorkerExecutor = {
   canHandle: (kind) => kind === 'publish_post',
-  async execute(action) {
-    const text =
-      typeof action.payload === 'object' && action.payload !== null
-        ? String((action.payload as Record<string, unknown>).text ?? '')
-        : '';
-    return {
-      summary: `Post publié (executor factice, Phase 3) — ${text.slice(0, 80)}…`,
-      externalUrl: `fake://posts/${action.id}`,
+  async execute(action, rt) {
+    const p = action.payload as Record<string, unknown>;
+    const post: SocialPost = {
+      text: String(p.text ?? ''),
+      ...(typeof p.channel === 'string' ? { channel: p.channel } : {}),
     };
+
+    // Buffer connecté ? config.profileId requis.
+    try {
+      const buffer = await loadIntegrationToken(rt, action.ventureId, 'buffer');
+      const profileId = String((buffer.config as Record<string, unknown>).profileId ?? '');
+      if (profileId) {
+        const { updateId } = await publishToBuffer({
+          accessToken: buffer.token,
+          profileId,
+          post,
+        });
+        return { summary: 'Post publié via Buffer.', externalUrl: `buffer://updates/${updateId}` };
+      }
+    } catch {
+      // Pas de Buffer connecté : on retombe sur le repli ci-dessous.
+    }
+
+    const hint = bufferPublishHint(post);
+    return { summary: hint.summary };
   },
 };
 
-const EXECUTORS: WorkerExecutor[] = [deployPreview, deployProd, fakePublishPost];
+/** send_email_batch (classe C) : prospection conforme — filtrage + quota + unsubscribe. */
+const sendEmailBatchExecutor: WorkerExecutor = {
+  canHandle: (kind) => kind === 'send_email_batch',
+  async execute(action, rt) {
+    const p = action.payload as Partial<EmailBatchPayload>;
+    if (!p.subject || !p.body || !Array.isArray(p.recipients)) {
+      throw new Error(`payload send_email_batch invalide pour l'action ${action.id}`);
+    }
+    const res = await sendEmailBatch(rt, action.ventureId, {
+      subject: p.subject,
+      body: p.body,
+      recipients: p.recipients,
+    });
+    const parts = [`${res.sent} email(s) envoyé(s) via ${res.via}`];
+    if (res.removed.length > 0)
+      parts.push(`${res.removed.length} retiré(s) (suppression/statut/source)`);
+    if (res.quotaTruncated > 0) parts.push(`${res.quotaTruncated} bloqué(s) par le quota du plan`);
+    if (res.failed > 0) parts.push(`${res.failed} en échec`);
+    return { summary: parts.join(' · ') };
+  },
+};
+
+const EXECUTORS: WorkerExecutor[] = [
+  deployPreview,
+  deployProd,
+  publishPost,
+  sendEmailBatchExecutor,
+];
 
 export function findExecutor(kind: string): WorkerExecutor | undefined {
   return EXECUTORS.find((e) => e.canHandle(kind));

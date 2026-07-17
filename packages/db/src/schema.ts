@@ -346,6 +346,8 @@ export const outreachContacts = pgTable(
     status: text('status', { enum: ['new', 'contacted', 'replied', 'unsubscribed', 'bounced'] })
       .notNull()
       .default('new'),
+    // Horodatage du dernier envoi (Phase 5) : sert au décompte du quota mensuel du plan.
+    contactedAt: timestamp('contacted_at', { withTimezone: true }),
   },
   (t) => [uniqueIndex('uq_outreach_venture_email').on(t.ventureId, t.email)],
 );

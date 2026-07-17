@@ -8,8 +8,10 @@
 /** Types d'intégration supportés (aligné sur l'enum `integrations.kind` de packages/db). */
 export type IntegrationKind = 'github' | 'vercel' | 'cf_pages' | 'resend' | 'buffer' | 'telegram';
 
+export { bufferPublishHint, publishToBuffer, type SocialPost } from './buffer';
 export {
   createEmailSender,
+  createOutreachSender,
   type EmailEnv,
   type EmailSender,
   type SendEmailInput,

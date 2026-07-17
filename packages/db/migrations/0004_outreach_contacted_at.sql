@@ -1,0 +1,1 @@
+ALTER TABLE "outreach_contacts" ADD COLUMN "contacted_at" timestamp with time zone;

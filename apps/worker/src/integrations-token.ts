@@ -10,7 +10,7 @@ import type { Runtime } from './runtime';
 export async function loadIntegrationToken(
   rt: Runtime,
   ventureId: string,
-  kind: 'github' | 'vercel',
+  kind: 'github' | 'vercel' | 'resend' | 'buffer',
 ): Promise<{ token: string; config: Record<string, unknown> }> {
   const { db, env } = rt;
   if (env.SECRETS_MASTER_KEY === '') {

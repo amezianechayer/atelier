@@ -61,6 +61,45 @@ function PayloadPreview({ action }: { action: ActionItem }) {
       </div>
     );
   }
+  // Email batch : sujet + corps + destinataires exacts (SPEC.md §8.4).
+  if (action.kind === 'send_email_batch') {
+    const recipients = Array.isArray(p.recipients)
+      ? (p.recipients as Array<{ email?: string }>)
+      : [];
+    return (
+      <div className="stack" style={{ margin: '10px 0', gap: 8 }}>
+        <div>
+          <span className="muted" style={{ fontSize: '0.82rem' }}>
+            Sujet
+          </span>
+          <p style={{ margin: '2px 0 0', fontWeight: 600 }}>{String(p.subject ?? '')}</p>
+        </div>
+        <blockquote
+          style={{
+            borderLeft: '3px solid var(--accent)',
+            margin: 0,
+            padding: '4px 14px',
+            whiteSpace: 'pre-wrap',
+            maxHeight: 200,
+            overflowY: 'auto',
+          }}
+        >
+          {String(p.body ?? '')}
+        </blockquote>
+        <details>
+          <summary style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: '0.85rem' }}>
+            {recipients.length} destinataire(s) — le filtrage suppression list + quota s'applique à
+            l'envoi
+          </summary>
+          <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: '0.85rem' }} className="muted">
+            {recipients.map((r, i) => (
+              <li key={r.email ?? i}>{r.email}</li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    );
+  }
   const text = typeof p.text === 'string' ? p.text : typeof p.report === 'string' ? p.report : null;
   if (text) {
     return (

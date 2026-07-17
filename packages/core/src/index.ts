@@ -31,6 +31,19 @@ export {
   type LedgerType,
   verifyChain,
 } from './ledger';
+export {
+  type ContactStatus,
+  enforcePlanQuota,
+  type FilterSendableInput,
+  type FilterSendableResult,
+  filterSendable,
+  makeUnsubscribeToken,
+  normalizeEmail,
+  type OutreachContact,
+  type QuotaInput,
+  type QuotaResult,
+  verifyUnsubscribeToken,
+} from './outreach';
 export { decryptSecret, type EncryptedSecret, encryptSecret } from './vault';
 
 /** Classe d'action (SPEC.md §2.5) : A réversible/privé, B visible/réversible, C irréversible/public. */

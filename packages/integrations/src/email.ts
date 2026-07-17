@@ -9,6 +9,8 @@ export interface SendEmailInput {
   subject: string;
   text: string;
   html?: string;
+  /** En-têtes additionnels (ex. List-Unsubscribe pour la prospection, SPEC.md §8.4). */
+  headers?: Record<string, string>;
 }
 
 export interface EmailSender {
@@ -51,19 +53,20 @@ async function postJson(
   }
 }
 
-function mailpitSender(env: EmailEnv, fetchFn: typeof fetch): EmailSender {
-  const from = parseFrom(env.EMAIL_FROM);
+function mailpitSender(from: string, mailpitUrl: string, fetchFn: typeof fetch): EmailSender {
+  const parsed = parseFrom(from);
   return {
     async send(input) {
       await postJson(
         fetchFn,
-        `${env.MAILPIT_URL}/api/v1/send`,
+        `${mailpitUrl}/api/v1/send`,
         {
-          From: { Email: from.email, Name: from.name ?? '' },
+          From: { Email: parsed.email, Name: parsed.name ?? '' },
           To: [{ Email: input.to }],
           Subject: input.subject,
           Text: input.text,
           ...(input.html ? { HTML: input.html } : {}),
+          ...(input.headers ? { Headers: input.headers as unknown as Record<string, string> } : {}),
         },
         {},
       );
@@ -71,29 +74,48 @@ function mailpitSender(env: EmailEnv, fetchFn: typeof fetch): EmailSender {
   };
 }
 
-function resendSender(env: EmailEnv, fetchFn: typeof fetch): EmailSender {
+function resendSender(from: string, token: string, fetchFn: typeof fetch): EmailSender {
   return {
     async send(input) {
       await postJson(
         fetchFn,
         'https://api.resend.com/emails',
         {
-          from: env.EMAIL_FROM,
+          from,
           to: [input.to],
           subject: input.subject,
           text: input.text,
           ...(input.html ? { html: input.html } : {}),
+          ...(input.headers ? { headers: input.headers } : {}),
         },
-        { Authorization: `Bearer ${env.RESEND_API_KEY}` },
+        { Authorization: `Bearer ${token}` },
       );
     },
   };
 }
 
+/** Emails produit (magic links) : Resend de la plateforme, sinon Mailpit en dev. */
 export function createEmailSender(env: EmailEnv, fetchFn: typeof fetch = fetch): EmailSender {
-  if (env.RESEND_API_KEY !== '') return resendSender(env, fetchFn);
-  if (env.NODE_ENV !== 'production') return mailpitSender(env, fetchFn);
+  if (env.RESEND_API_KEY !== '') return resendSender(env.EMAIL_FROM, env.RESEND_API_KEY, fetchFn);
+  if (env.NODE_ENV !== 'production') return mailpitSender(env.EMAIL_FROM, env.MAILPIT_URL, fetchFn);
   throw new Error(
     "RESEND_API_KEY manquante : impossible d'envoyer des emails en production. Voir .env.example.",
+  );
+}
+
+/**
+ * Prospection (SPEC.md §8.4) : envoi via le Resend DE L'UTILISATEUR (token executor-side),
+ * avec repli Mailpit en dev quand aucun compte Resend n'est connecté.
+ */
+export function createOutreachSender(
+  opts: { from: string; resendToken?: string; mailpitUrl: string; devFallback: boolean },
+  fetchFn: typeof fetch = fetch,
+): EmailSender {
+  if (opts.resendToken && opts.resendToken !== '') {
+    return resendSender(opts.from, opts.resendToken, fetchFn);
+  }
+  if (opts.devFallback) return mailpitSender(opts.from, opts.mailpitUrl, fetchFn);
+  throw new Error(
+    'Aucun compte Resend connecté : connecte Resend dans Réglages pour envoyer de la prospection.',
   );
 }
