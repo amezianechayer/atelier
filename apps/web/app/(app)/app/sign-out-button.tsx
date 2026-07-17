@@ -9,16 +9,10 @@ export function SignOutButton() {
   return (
     <button
       type="button"
+      className="btn btn-ghost btn-sm"
       onClick={async () => {
         await authClient.signOut();
         router.push('/login');
-      }}
-      style={{
-        padding: '6px 12px',
-        borderRadius: 6,
-        border: '1px solid #ccc',
-        background: '#fff',
-        cursor: 'pointer',
       }}
     >
       {t(DEFAULT_LOCALE, 'app.signout')}

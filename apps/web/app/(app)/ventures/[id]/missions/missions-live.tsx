@@ -24,15 +24,15 @@ const ROLE_AVATARS: Record<string, string> = {
   marketer: '📣',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  backlog: '#6b7280',
-  queued: '#b45309',
-  running: '#1d4ed8',
-  awaiting_approval: '#b45309',
-  done: '#15803d',
-  failed: '#b00020',
-  cancelled: '#6b7280',
-  budget_exceeded: '#b00020',
+const STATUS_TAG: Record<string, string> = {
+  backlog: 'tag',
+  queued: 'tag-warn',
+  running: 'tag-info',
+  awaiting_approval: 'tag-warn',
+  done: 'tag-ok',
+  failed: 'tag-danger',
+  cancelled: 'tag',
+  budget_exceeded: 'tag-danger',
 };
 
 export function MissionsLive(props: { ventureId: string; ventureName: string }) {
@@ -73,61 +73,57 @@ export function MissionsLive(props: { ventureId: string; ventureName: string }) 
   }
 
   return (
-    <main style={{ maxWidth: 760, margin: '4vh auto', padding: 24 }}>
-      <p>
+    <main className="page">
+      <p className="crumb">
         <Link href="/app">{t(L, 'common.backToVentures')}</Link>
         {'   ·   '}
         <Link href={`/ventures/${props.ventureId}/actions`}>🛡️ {t(L, 'actions.title')}</Link>
       </p>
-      <h1>
-        📋 {props.ventureName} — {t(L, 'missions.title')}
-      </h1>
-      <p style={{ color: '#555' }}>{t(L, 'missions.subtitle')}</p>
+      <p className="eyebrow">{props.ventureName}</p>
+      <h1>📋 {t(L, 'missions.title')}</h1>
+      <p className="muted" style={{ marginTop: 0 }}>
+        {t(L, 'missions.subtitle')}
+      </p>
       {error !== '' && (
-        <p role="alert" style={{ color: '#b00020' }}>
+        <p role="alert" style={{ color: 'var(--danger)' }}>
           {error}
         </p>
       )}
-      {items.length === 0 && <p style={{ color: '#777' }}>{t(L, 'missions.empty')}</p>}
+      {items.length === 0 && <p className="muted">{t(L, 'missions.empty')}</p>}
 
-      <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 10 }}>
+      <ul className="stack" style={{ listStyle: 'none', padding: 0, marginTop: 18 }}>
         {items.map((m) => (
-          <li key={m.id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <li key={m.id} className="card">
+            <div className="between">
               <strong>
                 {ROLE_AVATARS[m.agentRole] ?? '•'} {m.title}
               </strong>
-              <span style={{ color: STATUS_COLORS[m.status] ?? '#333', whiteSpace: 'nowrap' }}>
+              <span className={`tag ${STATUS_TAG[m.status] ?? 'tag'}`}>
                 {m.status === 'running' ? t(L, 'missions.running') : m.status}
               </span>
             </div>
-            <p style={{ margin: '6px 0', color: '#555' }}>{m.instruction}</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#888', fontSize: 13 }}>
+            <p className="muted" style={{ margin: '8px 0 12px' }}>
+              {m.instruction}
+            </p>
+            <div className="between">
+              <span className="muted" style={{ fontSize: '0.82rem' }}>
                 P{m.priority} · {t(L, 'missions.cost')} {Number(m.costActualUsd).toFixed(4)} $
               </span>
               {(m.status === 'backlog' || m.status === 'failed') && (
                 <button
                   type="button"
+                  className="btn btn-sm"
                   disabled={busy === m.id}
                   onClick={() => run(m.id)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #111',
-                    background: '#111',
-                    color: '#fff',
-                    cursor: 'pointer',
-                  }}
                 >
                   ▶ {t(L, 'missions.run')}
                 </button>
               )}
             </div>
             {m.resultSummary && (
-              <details style={{ marginTop: 8 }}>
-                <summary style={{ cursor: 'pointer', color: '#555' }}>Résultat</summary>
-                <p style={{ whiteSpace: 'pre-wrap', color: '#333' }}>{m.resultSummary}</p>
+              <details style={{ marginTop: 10 }}>
+                <summary style={{ cursor: 'pointer', color: 'var(--muted)' }}>Résultat</summary>
+                <p style={{ whiteSpace: 'pre-wrap', marginTop: 6 }}>{m.resultSummary}</p>
               </details>
             )}
           </li>

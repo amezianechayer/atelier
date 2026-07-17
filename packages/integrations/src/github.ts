@@ -51,30 +51,53 @@ export async function pushFiles(
   const base = `/repos/${ref.owner}/${ref.repo}`;
   const repo = await gh<{ default_branch: string; html_url: string }>(token, base);
 
-  // Base commit : la branche cible si elle existe, sinon la branche par défaut.
-  let baseSha: string;
-  let branchExists = true;
-  try {
-    const targetRef = await gh<{ object: { sha: string } }>(
+  async function refSha(branch: string): Promise<string | null> {
+    try {
+      const r = await gh<{ object: { sha: string } }>(
+        token,
+        `${base}/git/ref/heads/${encodeURIComponent(branch)}`,
+      );
+      return r.object.sha;
+    } catch (err) {
+      // 404 (branche absente) ou 409 (repo vide, sans commit) : pas de base.
+      const status = (err as { message?: string }).message ?? '';
+      if (/HTTP 40(4|9)/.test(status)) return null;
+      throw err;
+    }
+  }
+
+  // Base : la branche cible si elle existe, sinon la branche par défaut.
+  const targetSha = await refSha(input.branch);
+  let branchExists = targetSha !== null;
+  let baseSha = targetSha ?? (await refSha(repo.default_branch));
+
+  // Repo totalement vide (aucun commit) : GitHub refuse la Git Data API tant qu'il n'y a
+  // pas d'historique. On amorce la branche cible avec un premier fichier (Contents API).
+  if (baseSha === null) {
+    const [firstPath, firstContent] = Object.entries(input.files)[0] ?? ['README.md', '# \n'];
+    const boot = await gh<{ commit: { sha: string } }>(
       token,
-      `${base}/git/ref/heads/${encodeURIComponent(input.branch)}`,
+      `${base}/contents/${firstPath.split('/').map(encodeURIComponent).join('/')}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          message: input.commitMessage,
+          content: Buffer.from(firstContent, 'utf8').toString('base64'),
+          branch: input.branch,
+        }),
+      },
     );
-    baseSha = targetRef.object.sha;
-  } catch {
-    branchExists = false;
-    const defRef = await gh<{ object: { sha: string } }>(
-      token,
-      `${base}/git/ref/heads/${encodeURIComponent(repo.default_branch)}`,
-    );
-    baseSha = defRef.object.sha;
+    baseSha = boot.commit.sha;
+    branchExists = true;
   }
 
   const baseCommit = await gh<{ tree: { sha: string } }>(token, `${base}/git/commits/${baseSha}`);
+  const baseTreeSha = baseCommit.tree.sha;
 
   const tree = await gh<{ sha: string }>(token, `${base}/git/trees`, {
     method: 'POST',
     body: JSON.stringify({
-      base_tree: baseCommit.tree.sha,
+      base_tree: baseTreeSha,
       tree: Object.entries(input.files).map(([path, content]) => ({
         path,
         mode: '100644',
@@ -86,7 +109,11 @@ export async function pushFiles(
 
   const commit = await gh<{ sha: string }>(token, `${base}/git/commits`, {
     method: 'POST',
-    body: JSON.stringify({ message: input.commitMessage, tree: tree.sha, parents: [baseSha] }),
+    body: JSON.stringify({
+      message: input.commitMessage,
+      tree: tree.sha,
+      parents: baseSha ? [baseSha] : [],
+    }),
   });
 
   const refPath = `heads/${input.branch}`;

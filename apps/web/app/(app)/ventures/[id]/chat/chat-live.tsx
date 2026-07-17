@@ -77,89 +77,49 @@ export function ChatLive(props: {
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: '3vh auto', padding: 24 }}>
-      <p>
+    <main className="page">
+      <p className="crumb">
         <Link href="/app">{t(L, 'common.backToVentures')}</Link>
       </p>
-      <h1>
-        🧭 {props.ventureName} — {t(L, 'chat.title')}
-      </h1>
+      <p className="eyebrow">{props.ventureName}</p>
+      <h1>🧭 {t(L, 'chat.title')}</h1>
 
       <div
+        className="card"
         style={{
-          border: '1px solid #ddd',
-          borderRadius: 8,
-          padding: 16,
-          minHeight: 320,
-          maxHeight: '55vh',
+          minHeight: 340,
+          maxHeight: '58vh',
           overflowY: 'auto',
           display: 'grid',
           gap: 10,
           alignContent: 'start',
+          marginTop: 16,
         }}
       >
-        {history.length === 0 && pending === '' && (
-          <p style={{ color: '#777' }}>{t(L, 'chat.empty')}</p>
-        )}
+        {history.length === 0 && pending === '' && <p className="muted">{t(L, 'chat.empty')}</p>}
         {history.map((m) => (
-          <div
-            key={m.id}
-            style={{
-              justifySelf: m.role === 'user' ? 'end' : 'start',
-              background: m.role === 'user' ? '#111' : '#f4f4f4',
-              color: m.role === 'user' ? '#fff' : '#111',
-              borderRadius: 10,
-              padding: '8px 12px',
-              maxWidth: '85%',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
+          <div key={m.id} className={`bubble ${m.role === 'user' ? 'bubble-user' : 'bubble-ceo'}`}>
             {m.content}
           </div>
         ))}
-        {pending !== '' && (
-          <div
-            style={{
-              justifySelf: 'start',
-              background: '#f4f4f4',
-              borderRadius: 10,
-              padding: '8px 12px',
-              maxWidth: '85%',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {pending}▌
-          </div>
-        )}
-        {thinking && pending === '' && <p style={{ color: '#777' }}>{t(L, 'chat.thinking')}</p>}
+        {pending !== '' && <div className="bubble bubble-ceo">{pending}▌</div>}
+        {thinking && pending === '' && <p className="muted">{t(L, 'chat.thinking')}</p>}
         <div ref={bottomRef} />
       </div>
 
       {error !== '' && (
-        <p role="alert" style={{ color: '#b00020' }}>
+        <p role="alert" style={{ color: 'var(--danger)' }}>
           {error}
         </p>
       )}
 
-      <form onSubmit={send} style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+      <form onSubmit={send} className="row" style={{ marginTop: 12, flexWrap: 'nowrap' }}>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={t(L, 'chat.placeholder')}
-          style={{ flex: 1, padding: 10, border: '1px solid #ccc', borderRadius: 8 }}
         />
-        <button
-          type="submit"
-          disabled={thinking}
-          style={{
-            padding: '10px 18px',
-            borderRadius: 8,
-            border: '1px solid #333',
-            background: '#111',
-            color: '#fff',
-            cursor: 'pointer',
-          }}
-        >
+        <button type="submit" className="btn btn-accent" disabled={thinking}>
           {t(L, 'chat.send')}
         </button>
       </form>

@@ -1,24 +1,16 @@
 import type { ReactNode } from 'react';
 import content from '../content.json';
+import './globals.css';
 
 export const metadata = {
-  title: content.brandName,
-  description: content.tagline,
+  title: `${content.brandName} — ${content.tagline}`,
+  description: content.subtitle,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
-      <body
-        style={{
-          margin: 0,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          background: '#0b0b0f',
-          color: '#f4f4f5',
-        }}
-      >
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

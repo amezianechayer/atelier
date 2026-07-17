@@ -5,7 +5,7 @@ import { type FileMap, filesToTar, tarToFiles } from './tar';
 
 /**
  * Sandbox durcie du Builder (SPEC.md §11) pilotée par dockerode.
- * - non-root, rootfs read-only sauf tmpfs (/workspace, /tmp, $HOME)
+ * - non-root, rootfs read-only : /workspace = volume nommé, /tmp et $HOME = tmpfs
  * - caps drop ALL, no-new-privileges, limites pids/mémoire/cpu, timeout dur
  * - egress deny-by-default : réseau `internal` + proxy CONNECT à allowlist api.anthropic.com
  * - AUCUN token utilisateur, AUCUN socket Docker monté

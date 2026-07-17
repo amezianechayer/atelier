@@ -16,39 +16,79 @@ interface ActionItem {
   createdAt: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: '#b45309',
-  approved: '#1d4ed8',
-  executed: '#15803d',
-  rejected: '#b00020',
-  expired: '#6b7280',
+const STATUS_TAG: Record<string, string> = {
+  pending: 'tag-warn',
+  approved: 'tag-info',
+  auto_executed: 'tag-ok',
+  executed: 'tag-ok',
+  rejected: 'tag-danger',
+  expired: 'tag',
+  undone: 'tag',
 };
 
-/** Aperçu EXACT (SPEC.md §10) : le post tel qu'il partira, sinon le payload brut. */
+const KIND_LABEL: Record<string, string> = {
+  publish_post: 'Publier un post',
+  send_email_batch: 'Envoyer des emails',
+  deploy_preview: 'Déployer une préversion',
+  deploy_prod: 'Déployer en production',
+  research_report: 'Rapport de recherche',
+  draft_post: 'Brouillon de post',
+};
+
+/** Aperçu EXACT (SPEC.md §10) : ce qui sera exécuté, tel quel. */
 function PayloadPreview({ action }: { action: ActionItem }) {
-  const text = typeof action.payload.text === 'string' ? action.payload.text : null;
-  const report = typeof action.payload.report === 'string' ? action.payload.report : null;
-  const content = text ?? report;
-  if (content) {
+  const p = action.payload;
+  // Déploiement : montre le projet, la branche et le nombre de fichiers.
+  if (action.kind === 'deploy_preview' || action.kind === 'deploy_prod') {
+    const files = p.files && typeof p.files === 'object' ? Object.keys(p.files as object) : [];
+    return (
+      <div className="stack" style={{ margin: '10px 0', gap: 6 }}>
+        <div className="row">
+          <span className="tag tag-info">projet {String(p.projectName ?? '?')}</span>
+          <span className="tag">branche {String(p.branch ?? '?')}</span>
+          <span className="tag">{files.length} fichiers</span>
+        </div>
+        <details>
+          <summary style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: '0.85rem' }}>
+            Voir les fichiers déployés
+          </summary>
+          <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: '0.85rem' }} className="muted">
+            {files.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    );
+  }
+  const text = typeof p.text === 'string' ? p.text : typeof p.report === 'string' ? p.report : null;
+  if (text) {
     return (
       <blockquote
         style={{
-          borderLeft: '3px solid #ccc',
-          margin: '8px 0',
-          padding: '4px 12px',
+          borderLeft: '3px solid var(--accent)',
+          margin: '10px 0',
+          padding: '4px 14px',
           whiteSpace: 'pre-wrap',
-          color: '#333',
-          maxHeight: 220,
+          maxHeight: 240,
           overflowY: 'auto',
         }}
       >
-        {content}
+        {text}
       </blockquote>
     );
   }
   return (
-    <pre style={{ background: '#f6f6f6', padding: 10, borderRadius: 6, overflowX: 'auto' }}>
-      {JSON.stringify(action.payload, null, 2)}
+    <pre
+      style={{
+        background: 'var(--paper)',
+        padding: 12,
+        borderRadius: 8,
+        overflowX: 'auto',
+        fontSize: '0.82rem',
+      }}
+    >
+      {JSON.stringify(p, null, 2)}
     </pre>
   );
 }
@@ -94,72 +134,73 @@ export function ActionsLive(props: { ventureId: string; ventureName: string }) {
   const history = items.filter((a) => !(a.status === 'pending' && a.requiresApproval));
 
   return (
-    <main style={{ maxWidth: 760, margin: '4vh auto', padding: 24 }}>
-      <p>
+    <main className="page">
+      <p className="crumb">
         <Link href="/app">{t(L, 'common.backToVentures')}</Link>
+        {'   ·   '}
+        <Link href={`/ventures/${props.ventureId}/missions`}>📋 {t(L, 'missions.title')}</Link>
       </p>
-      <h1>
-        🛡️ {props.ventureName} — {t(L, 'actions.title')}
-      </h1>
-      <p style={{ color: '#555' }}>{t(L, 'actions.subtitle')}</p>
+      <p className="eyebrow">{props.ventureName}</p>
+      <h1>🛡️ {t(L, 'actions.title')}</h1>
+      <p className="muted" style={{ marginTop: 0 }}>
+        {t(L, 'actions.subtitle')}
+      </p>
       {error !== '' && (
-        <p role="alert" style={{ color: '#b00020' }}>
+        <p role="alert" style={{ color: 'var(--danger)' }}>
           {error}
         </p>
       )}
 
       <h2>{t(L, 'actions.pendingSection')}</h2>
-      {pending.length === 0 && <p style={{ color: '#777' }}>{t(L, 'actions.empty')}</p>}
+      {pending.length === 0 && <p className="muted">{t(L, 'actions.empty')}</p>}
       {pending.map((a) => (
-        <section
-          key={a.id}
-          style={{ border: '2px solid #b45309', borderRadius: 8, padding: 16, marginBottom: 12 }}
-        >
-          <p style={{ margin: 0 }}>
-            <strong>{a.kind}</strong>{' '}
-            <span style={{ color: '#666' }}>
-              — {t(L, 'actions.classLabel')} {a.class}
+        <div key={a.id} className="card card-accent reveal">
+          <div className="between">
+            <strong>{KIND_LABEL[a.kind] ?? a.kind}</strong>
+            <span className="tag tag-accent">
+              {t(L, 'actions.classLabel')} {a.class}
             </span>
-          </p>
+          </div>
           <PayloadPreview action={a} />
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="row">
             <button
               type="button"
+              className="btn btn-ok btn-sm"
               disabled={busy === a.id}
               onClick={() => decide(a.id, 'approve')}
-              style={{ ...buttonStyle, background: '#15803d', borderColor: '#15803d' }}
             >
               ✓ {t(L, 'common.approve')}
             </button>
             <button
               type="button"
+              className="btn btn-danger btn-sm"
               disabled={busy === a.id}
               onClick={() => decide(a.id, 'reject')}
-              style={{ ...buttonStyle, background: '#b00020', borderColor: '#b00020' }}
             >
               ✕ {t(L, 'common.reject')}
             </button>
           </div>
-        </section>
+        </div>
       ))}
 
       <h2>{t(L, 'actions.historySection')}</h2>
-      {history.map((a) => (
-        <p key={a.id} style={{ borderBottom: '1px solid #eee', paddingBottom: 8 }}>
-          <span style={{ color: STATUS_COLORS[a.status] ?? '#333', fontWeight: 600 }}>
-            {a.status}
-          </span>{' '}
-          — {a.kind} ({t(L, 'actions.classLabel')} {a.class})
-        </p>
-      ))}
+      <div className="stack" style={{ gap: 8 }}>
+        {history.map((a) => (
+          <div
+            key={a.id}
+            className="between"
+            style={{ borderBottom: '1px solid var(--line)', paddingBottom: 8 }}
+          >
+            <span>
+              {KIND_LABEL[a.kind] ?? a.kind}{' '}
+              <span className="muted">
+                ({t(L, 'actions.classLabel')} {a.class})
+              </span>
+            </span>
+            <span className={`tag ${STATUS_TAG[a.status] ?? 'tag'}`}>{a.status}</span>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
-
-const buttonStyle: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 6,
-  border: '1px solid',
-  color: '#fff',
-  cursor: 'pointer',
-};

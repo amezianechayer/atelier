@@ -22,35 +22,46 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
   }
 
   return (
-    <div style={{ display: 'grid', gap: 16, maxWidth: 360 }}>
+    <div className="stack">
       {googleEnabled ? (
-        <button type="button" onClick={signInWithGoogle} style={buttonStyle}>
+        <button type="button" className="btn btn-ghost" onClick={signInWithGoogle}>
           {t(L, 'login.googleCta')}
         </button>
       ) : (
-        <p style={{ color: '#666', fontSize: 14 }}>{t(L, 'login.googleUnavailable')}</p>
+        <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>
+          {t(L, 'login.googleUnavailable')}
+        </p>
       )}
 
-      <p style={{ textAlign: 'center', color: '#999', margin: 0 }}>{t(L, 'login.or')}</p>
+      <p className="muted" style={{ textAlign: 'center', margin: 0, fontSize: '0.85rem' }}>
+        {t(L, 'login.or')}
+      </p>
 
       {state === 'sent' ? (
-        <p role="status">{t(L, 'login.linkSent')}</p>
+        <p
+          className="tag tag-ok"
+          role="status"
+          style={{ padding: '10px 14px', fontSize: '0.9rem' }}
+        >
+          {t(L, 'login.linkSent')}
+        </p>
       ) : (
-        <form onSubmit={sendMagicLink} style={{ display: 'grid', gap: 8 }}>
-          <label htmlFor="email">{t(L, 'login.emailLabel')}</label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ padding: 8, border: '1px solid #ccc', borderRadius: 6 }}
-          />
-          <button type="submit" disabled={state === 'sending'} style={buttonStyle}>
-            {state === 'sending' ? t(L, 'login.sending') : t(L, 'login.sendLink')}
+        <form onSubmit={sendMagicLink} className="stack" style={{ gap: 10 }}>
+          <div>
+            <label htmlFor="email">{t(L, 'login.emailLabel')}</label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="btn btn-accent" disabled={state === 'sending'}>
+            {state === 'sending' ? t(L, 'login.sending') : `✉️ ${t(L, 'login.sendLink')}`}
           </button>
           {state === 'error' && (
-            <p role="alert" style={{ color: '#b00020' }}>
+            <p role="alert" style={{ color: 'var(--danger)', margin: 0 }}>
               {t(L, 'login.error')}
             </p>
           )}
@@ -59,12 +70,3 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
     </div>
   );
 }
-
-const buttonStyle: React.CSSProperties = {
-  padding: '10px 16px',
-  borderRadius: 6,
-  border: '1px solid #333',
-  background: '#111',
-  color: '#fff',
-  cursor: 'pointer',
-};

@@ -1,0 +1,215 @@
+:root {
+  --paper: #f7f4ee;
+  --paper-2: #efeae0;
+  --ink: #1b1a17;
+  --muted: #6f695f;
+  --line: #e0d9cc;
+  --accent: #b8532c;
+  --accent-ink: #fff;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(27, 26, 23, 0.04), 0 12px 40px -12px rgba(27, 26, 23, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  /* Grain lumineux : deux halos radiaux discrets, aucun asset externe. */
+  background-image:
+    radial-gradient(60rem 60rem at 80% -10%, rgba(184, 83, 44, 0.08), transparent 60%),
+    radial-gradient(50rem 50rem at -10% 20%, rgba(43, 74, 63, 0.06), transparent 55%);
+  background-repeat: no-repeat;
+  min-height: 100vh;
+}
+
+.wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: clamp(3.5rem, 12vh, 9rem) 24px 4rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0 0 1.5rem;
+}
+.eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.6;
+}
+
+h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  font-size: clamp(2.4rem, 6.5vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.25rem;
+}
+h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.subtitle {
+  font-size: clamp(1.1rem, 2.4vw, 1.3rem);
+  color: var(--muted);
+  margin: 0 0 2.5rem;
+  max-width: 34ch;
+}
+
+.bullets {
+  list-style: none;
+  padding: 0;
+  margin: 2.75rem 0 0;
+  display: grid;
+  gap: 14px;
+}
+.bullets li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 1.02rem;
+}
+.bullets .check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.waitlist {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.waitlist input {
+  flex: 1 1 220px;
+  padding: 13px 15px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1rem;
+  outline: none;
+}
+.waitlist input::placeholder {
+  color: #a8a196;
+}
+.waitlist button {
+  padding: 13px 24px;
+  border: none;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease;
+}
+.waitlist button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--accent);
+}
+.waitlist button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.form-msg {
+  margin: 14px 2px 0;
+  font-weight: 600;
+}
+.form-msg.ok {
+  color: #2b4a3f;
+}
+.form-msg.err {
+  color: #b8532c;
+}
+
+footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.85rem;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+footer .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.5;
+}
+
+/* Entrée en fondu, désactivée si l'utilisateur préfère moins de mouvement. */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: reveal 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+.reveal:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.reveal:nth-child(3) {
+  animation-delay: 0.12s;
+}
+.reveal:nth-child(4) {
+  animation-delay: 0.18s;
+}
+.reveal:nth-child(5) {
+  animation-delay: 0.24s;
+}
+.reveal:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+@keyframes reveal {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}

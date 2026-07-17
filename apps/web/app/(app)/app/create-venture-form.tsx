@@ -38,52 +38,38 @@ export function CreateVentureForm() {
   }
 
   return (
-    <form onSubmit={submit} style={{ display: 'grid', gap: 8, marginTop: 32, maxWidth: 480 }}>
-      <label htmlFor="name">{t(L, 'app.form.name')}</label>
-      <input
-        id="name"
-        required
-        maxLength={80}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        style={inputStyle}
-      />
-      <label htmlFor="pitch">{t(L, 'app.form.pitch')}</label>
-      <textarea
-        id="pitch"
-        required
-        maxLength={2000}
-        rows={4}
-        value={pitch}
-        onChange={(e) => setPitch(e.target.value)}
-        style={inputStyle}
-      />
-      <button
-        type="submit"
-        disabled={state === 'saving'}
-        style={{
-          padding: '10px 16px',
-          borderRadius: 6,
-          border: '1px solid #333',
-          background: '#111',
-          color: '#fff',
-          cursor: 'pointer',
-        }}
-      >
-        {state === 'saving' ? t(L, 'common.loading') : t(L, 'app.form.submit')}
-      </button>
+    <form onSubmit={submit} className="stack">
+      <div>
+        <label htmlFor="name">{t(L, 'app.form.name')}</label>
+        <input
+          id="name"
+          required
+          maxLength={80}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+      <div>
+        <label htmlFor="pitch">{t(L, 'app.form.pitch')}</label>
+        <textarea
+          id="pitch"
+          required
+          maxLength={2000}
+          rows={4}
+          value={pitch}
+          onChange={(e) => setPitch(e.target.value)}
+        />
+      </div>
+      <div>
+        <button type="submit" className="btn btn-accent" disabled={state === 'saving'}>
+          {state === 'saving' ? t(L, 'common.loading') : `✨ ${t(L, 'app.form.submit')}`}
+        </button>
+      </div>
       {state === 'error' && (
-        <p role="alert" style={{ color: '#b00020' }}>
+        <p role="alert" style={{ color: 'var(--danger)', margin: 0 }}>
           {errorMessage}
         </p>
       )}
     </form>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  padding: 8,
-  border: '1px solid #ccc',
-  borderRadius: 6,
-  fontFamily: 'inherit',
-};

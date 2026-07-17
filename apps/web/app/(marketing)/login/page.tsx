@@ -13,10 +13,15 @@ export default async function LoginPage() {
   const googleEnabled = env.GOOGLE_CLIENT_ID !== '' && env.GOOGLE_CLIENT_SECRET !== '';
 
   return (
-    <main style={{ maxWidth: 480, margin: '10vh auto', padding: 24 }}>
+    <main className="page page-narrow" style={{ paddingTop: '12vh' }}>
+      <p className="eyebrow">Atelier</p>
       <h1>{t(DEFAULT_LOCALE, 'login.title')}</h1>
-      <p>{t(DEFAULT_LOCALE, 'login.subtitle')}</p>
-      <LoginForm googleEnabled={googleEnabled} />
+      <p className="muted" style={{ marginTop: 0, marginBottom: 28 }}>
+        {t(DEFAULT_LOCALE, 'login.subtitle')}
+      </p>
+      <div className="card">
+        <LoginForm googleEnabled={googleEnabled} />
+      </div>
     </main>
   );
 }

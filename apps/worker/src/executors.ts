@@ -56,13 +56,24 @@ const deployPreview: WorkerExecutor = {
   async execute(action, rt) {
     const payload = deployPayload(action);
 
+    // Le push sur le repo de l'utilisateur est le différenciateur, mais une panne GitHub
+    // transitoire ne doit PAS empêcher la préversion : on pousse best-effort, on déploie
+    // toujours. Note remontée à l'utilisateur si le push a échoué.
     const github = await loadIntegrationToken(rt, action.ventureId, 'github');
     const ref = repoRef(github.config);
-    const push = await pushFiles(github.token, ref, {
-      branch: payload.branch,
-      files: payload.files,
-      commitMessage: payload.commitMessage ?? 'Landing par Atelier (préversion)',
-    });
+    let pushNote = '';
+    let commitSha: string | undefined;
+    try {
+      const push = await pushFiles(github.token, ref, {
+        branch: payload.branch,
+        files: payload.files,
+        commitMessage: payload.commitMessage ?? 'Landing par Atelier (préversion)',
+      });
+      commitSha = push.commitSha;
+      pushNote = ` Code sur ${ref.owner}/${ref.repo} (branche ${push.branch}) : ${push.htmlUrl}.`;
+    } catch (err) {
+      pushNote = ` (push GitHub reporté : ${(err as Error).message.slice(0, 80)})`;
+    }
 
     const vercel = await loadIntegrationToken(rt, action.ventureId, 'vercel');
     const created = await createDeployment({
@@ -71,7 +82,7 @@ const deployPreview: WorkerExecutor = {
       files: payload.files,
       production: false,
       gitRemoteUrl: `https://github.com/${ref.owner}/${ref.repo}`,
-      commitSha: push.commitSha,
+      ...(commitSha ? { commitSha } : {}),
     });
     const final = await pollDeployment(vercel.token, created.id);
     const previewUrl = `https://${final.url}`;
@@ -79,8 +90,8 @@ const deployPreview: WorkerExecutor = {
     return {
       summary:
         final.readyState === 'READY'
-          ? `Préversion en ligne (branche ${push.branch} sur ${ref.owner}/${ref.repo}). Code : ${push.htmlUrl}`
-          : `Déploiement préversion terminé en état ${final.readyState}.`,
+          ? `Préversion en ligne.${pushNote}`
+          : `Déploiement préversion terminé en état ${final.readyState}.${pushNote}`,
       externalUrl: previewUrl,
     };
   },

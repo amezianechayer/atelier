@@ -168,7 +168,7 @@ export const missionRun = inngest.createFunction(
     if (execution.killed) return { missionId, status: 'budget_exceeded' };
 
     // Auto-exécution des actions sans approbation (classe A/B : deploy_preview auto + notif).
-    await step.run('auto-executer', async () => {
+    const autoFailure = await step.run('auto-executer', async () => {
       const autoActions = await db
         .select()
         .from(actions)
@@ -189,26 +189,48 @@ export const missionRun = inngest.createFunction(
             .where(eq(actions.id, action.id));
           continue;
         }
-        const receipt = await executor.execute(action, rt);
-        await db
-          .update(actions)
-          .set({ status: 'auto_executed', executedAt: new Date() })
-          .where(and(eq(actions.id, action.id), eq(actions.status, 'pending')));
-        await appendEvent(db, ventureId, 'action_executed', {
-          actionId: action.id,
-          kind: action.kind,
-          auto: true,
-          receipt: { summary: receipt.summary, externalUrl: receipt.externalUrl ?? null },
-        });
-        await publish(db, ventureId, {
-          type: 'action.executed',
-          actionId: action.id,
-          kind: action.kind,
-          summary: receipt.summary,
-          externalUrl: receipt.externalUrl,
-        });
+        try {
+          const receipt = await executor.execute(action, rt);
+          await db
+            .update(actions)
+            .set({ status: 'auto_executed', executedAt: new Date() })
+            .where(and(eq(actions.id, action.id), eq(actions.status, 'pending')));
+          await appendEvent(db, ventureId, 'action_executed', {
+            actionId: action.id,
+            kind: action.kind,
+            auto: true,
+            receipt: { summary: receipt.summary, externalUrl: receipt.externalUrl ?? null },
+          });
+          await publish(db, ventureId, {
+            type: 'action.executed',
+            actionId: action.id,
+            kind: action.kind,
+            summary: receipt.summary,
+            externalUrl: receipt.externalUrl,
+          });
+        } catch (err) {
+          // Échec d'exécution (repo inaccessible, Vercel en erreur…) : on ne bloque pas
+          // la mission indéfiniment, on la termine proprement en failed.
+          const message = (err as Error).message.slice(0, 300);
+          await publish(db, ventureId, {
+            type: 'action.error',
+            actionId: action.id,
+            kind: action.kind,
+            message,
+          });
+          return { actionId: action.id, kind: action.kind, message };
+        }
       }
+      return null;
     });
+
+    if (autoFailure) {
+      await setMissionStatus(ventureId, missionId, 'failed', {
+        endedAt: new Date(),
+        resultSummary: `Échec d'exécution de ${autoFailure.kind} : ${autoFailure.message}`,
+      });
+      return { missionId, status: 'failed' };
+    }
 
     // Actions C en attente -> la mission attend les décisions (72 h max chacune).
     const pendingC = await step.run('lister-actions-c', async () => {

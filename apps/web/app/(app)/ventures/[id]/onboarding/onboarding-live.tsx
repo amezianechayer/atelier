@@ -106,125 +106,153 @@ export function OnboardingLive(props: {
     props.monthlyLimitUsd > 0 ? Math.min(100, (spentUsd / props.monthlyLimitUsd) * 100) : 0;
 
   return (
-    <main style={{ maxWidth: 760, margin: '4vh auto', padding: 24 }}>
-      <p>
+    <main className="page">
+      <p className="crumb">
         <Link href="/app">{t(L, 'common.backToVentures')}</Link>
       </p>
-      <h1>
-        {props.ventureName} — {t(L, 'onboarding.title')}
-      </h1>
-      <p style={{ color: '#555' }}>{t(L, 'onboarding.subtitle')}</p>
+      <p className="eyebrow">{props.ventureName}</p>
+      <h1>{t(L, 'onboarding.title')}</h1>
+      <p className="muted" style={{ marginTop: 0 }}>
+        {t(L, 'onboarding.subtitle')}
+      </p>
 
       {/* Jauge de budget TOUJOURS visible (SPEC.md §10) */}
-      <div style={{ margin: '16px 0', padding: 12, border: '1px solid #ddd', borderRadius: 8 }}>
-        <strong>{t(L, 'budget.remainingThisMonth')}</strong> : {spentUsd.toFixed(4)} $ /{' '}
-        {props.monthlyLimitUsd.toFixed(2)} $ {t(L, 'budget.spent')}
-        <div style={{ background: '#eee', borderRadius: 4, height: 8, marginTop: 6 }}>
+      <div className="card" style={{ marginTop: 18 }}>
+        <div className="gauge-row">
+          <span>{t(L, 'budget.remainingThisMonth')}</span>
+          <strong>
+            {spentUsd.toFixed(4)} $ / {props.monthlyLimitUsd.toFixed(2)} $
+          </strong>
+        </div>
+        <div className="gauge-track" style={{ marginTop: 8 }}>
           <div
-            style={{
-              width: `${gaugePct}%`,
-              background: gaugePct > 80 ? '#b00020' : '#111',
-              height: 8,
-              borderRadius: 4,
-              transition: 'width .3s',
-            }}
+            className={`gauge-fill${gaugePct > 80 ? ' hot' : ''}`}
+            style={{ width: `${gaugePct}%` }}
           />
         </div>
       </div>
 
       {error !== '' && (
-        <p role="alert" style={{ color: '#b00020' }}>
-          {error}
+        <div className="card card-accent" style={{ marginTop: 14, borderColor: 'var(--danger)' }}>
+          <p role="alert" style={{ margin: 0, color: 'var(--danger)' }}>
+            {error}
+          </p>
+        </div>
+      )}
+      {!started && error === '' && (
+        <p className="muted" style={{ marginTop: 20 }}>
+          {t(L, 'onboarding.waiting')}
         </p>
       )}
-      {!started && error === '' && <p>{t(L, 'onboarding.waiting')}</p>}
 
       {research !== '' && (
-        <section style={sectionStyle}>
+        <>
           <h2>
             {AGENT_AVATARS.researcher} {t(L, 'onboarding.section.research')}
           </h2>
-          <pre ref={researchRef} style={preStyle}>
-            {research}
-          </pre>
-        </section>
+          <div className="card reveal">
+            <pre ref={researchRef} style={preStyle}>
+              {research}
+            </pre>
+          </div>
+        </>
       )}
 
       {plan && (
-        <section style={sectionStyle}>
+        <>
           <h2>
             {AGENT_AVATARS.ceo} {t(L, 'onboarding.section.plan')}
           </h2>
-          <p>
-            <strong>{t(L, 'onboarding.plan.positioning')}</strong> : {plan.positioning}
-          </p>
-          <p>
-            <strong>{t(L, 'onboarding.plan.icp')}</strong> : {plan.icp}
-          </p>
-          <p>
-            <strong>{t(L, 'onboarding.plan.competitors')}</strong> :
-          </p>
-          <ul>
-            {plan.competitors.map((c) => (
-              <li key={c.name}>
-                <strong>{c.name}</strong> — {c.angle}
-              </li>
-            ))}
-          </ul>
-          <p>
-            <strong>{t(L, 'onboarding.plan.pricing')}</strong> : {plan.pricing}
-          </p>
-          <p>
-            <strong>{t(L, 'onboarding.plan.names')}</strong> : {plan.names.join(' · ')}
-          </p>
-        </section>
+          <div className="card reveal stack">
+            <div>
+              <strong>{t(L, 'onboarding.plan.positioning')}</strong>
+              <p className="muted" style={{ margin: '2px 0 0' }}>
+                {plan.positioning}
+              </p>
+            </div>
+            <div>
+              <strong>{t(L, 'onboarding.plan.icp')}</strong>
+              <p className="muted" style={{ margin: '2px 0 0' }}>
+                {plan.icp}
+              </p>
+            </div>
+            <div>
+              <strong>{t(L, 'onboarding.plan.competitors')}</strong>
+              <ul style={{ margin: '4px 0 0', paddingLeft: 20 }}>
+                {plan.competitors.map((c) => (
+                  <li key={c.name}>
+                    <strong>{c.name}</strong> — <span className="muted">{c.angle}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <strong>{t(L, 'onboarding.plan.pricing')}</strong>
+              <p className="muted" style={{ margin: '2px 0 0' }}>
+                {plan.pricing}
+              </p>
+            </div>
+            <div className="row">
+              <strong>{t(L, 'onboarding.plan.names')} :</strong>
+              {plan.names.map((n, i) => (
+                <span key={n} className={`tag ${i === 0 ? 'tag-accent' : ''}`}>
+                  {n}
+                </span>
+              ))}
+            </div>
+          </div>
+        </>
       )}
 
       {memorySlugs.length > 0 && (
-        <section style={sectionStyle}>
+        <>
           <h2>🧠 {t(L, 'onboarding.section.memory')}</h2>
-          <p>{memorySlugs.map((s) => `✓ ${s}`).join('   ')}</p>
-        </section>
+          <div className="card reveal row">
+            {memorySlugs.map((s) => (
+              <span key={s} className="tag tag-ok">
+                ✓ {s}
+              </span>
+            ))}
+          </div>
+        </>
       )}
 
       {backlog.length > 0 && (
-        <section style={sectionStyle}>
+        <>
           <h2>📋 {t(L, 'onboarding.section.backlog')}</h2>
-          <ol>
-            {backlog.map((m) => (
-              <li key={m.title}>
-                {AGENT_AVATARS[m.agentRole] ?? '•'} {m.title}{' '}
-                <span style={{ color: '#888' }}>(P{m.priority})</span>
-              </li>
-            ))}
-          </ol>
-        </section>
+          <div className="card reveal">
+            <ol style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 8 }}>
+              {backlog.map((m) => (
+                <li key={m.title}>
+                  {AGENT_AVATARS[m.agentRole] ?? '•'} {m.title}{' '}
+                  <span className="tag" style={{ marginLeft: 4 }}>
+                    P{m.priority}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </>
       )}
 
       {done && (
-        <section style={{ ...sectionStyle, borderColor: '#111' }}>
-          <h2>🎉 {t(L, 'onboarding.done')}</h2>
-          <p>
-            <Link href={`/ventures/${props.ventureId}/chat`}>{t(L, 'onboarding.goChat')} →</Link>
-          </p>
-        </section>
+        <div className="card card-accent reveal" style={{ marginTop: 20, textAlign: 'center' }}>
+          <h2 style={{ marginTop: 0 }}>🎉 {t(L, 'onboarding.done')}</h2>
+          <Link className="btn btn-accent" href={`/ventures/${props.ventureId}/chat`}>
+            {t(L, 'onboarding.goChat')} →
+          </Link>
+        </div>
       )}
     </main>
   );
 }
 
-const sectionStyle: React.CSSProperties = {
-  border: '1px solid #ddd',
-  borderRadius: 8,
-  padding: 16,
-  marginTop: 16,
-};
-
 const preStyle: React.CSSProperties = {
   whiteSpace: 'pre-wrap',
   fontFamily: 'inherit',
-  maxHeight: 280,
+  maxHeight: 300,
   overflowY: 'auto',
   margin: 0,
-  color: '#333',
+  color: 'var(--ink)',
+  lineHeight: 1.6,
 };
