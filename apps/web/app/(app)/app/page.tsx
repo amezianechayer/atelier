@@ -34,7 +34,12 @@ export default async function VenturesPage() {
         <Link href="/app" className="brand">
           Atelier<span className="spark">.</span>
         </Link>
-        <SignOutButton />
+        <div className="row" style={{ gap: 8 }}>
+          <Link href="/settings" className="btn btn-ghost btn-sm">
+            ⚙️ {t(L, 'app.openSettings')}
+          </Link>
+          <SignOutButton />
+        </div>
       </header>
 
       <main className="page">

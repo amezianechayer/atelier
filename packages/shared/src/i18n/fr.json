@@ -66,5 +66,19 @@
   "actions.pendingSection": "En attente de ton accord",
   "actions.historySection": "Historique",
   "actions.classLabel": "classe",
-  "actions.error": "La décision a échoué. Réessaie."
+  "actions.error": "La décision a échoué. Réessaie.",
+  "settings.title": "Réglages",
+  "settings.subtitle": "Tes comptes, tes assets : Atelier construit et publie SUR tes services, jamais à ta place.",
+  "settings.integrations": "Intégrations",
+  "settings.connected": "Connectée",
+  "settings.notConnected": "Non connectée",
+  "settings.github.help": "Token (scope repo) + repo « owner/nom » où le Builder poussera ta landing.",
+  "settings.github.tokenLabel": "Token GitHub",
+  "settings.github.repoLabel": "Repo cible (owner/nom)",
+  "settings.vercel.help": "Token Vercel : préversions automatiques, production après ton accord.",
+  "settings.vercel.tokenLabel": "Token Vercel",
+  "settings.buffer.help": "Publication Facebook/LinkedIn/X via ton compte Buffer — bientôt. En attendant, chaque post approuvé est prêt à copier-coller.",
+  "settings.connect": "Connecter",
+  "settings.connectSuccess": "Connectée ! Toutes tes ventures en profitent.",
+  "app.openSettings": "Réglages"
 }

@@ -37,13 +37,17 @@ export interface SendResult {
   via: 'resend' | 'mailpit';
 }
 
+/** Remplace {{firstName}} par le prénom du contact (sujet ET corps). */
+function personalize(text: string, contact: { firstName?: string | null }): string {
+  return text.replace(/\{\{\s*firstName\s*\}\}/g, contact.firstName?.trim() || 'bonjour');
+}
+
 function renderBody(
   body: string,
   contact: { firstName?: string | null },
   unsubUrl: string,
 ): string {
-  const withName = body.replace(/\{\{\s*firstName\s*\}\}/g, contact.firstName?.trim() || 'bonjour');
-  return `${withName}\n\n—\nPour ne plus recevoir ces emails : ${unsubUrl}`;
+  return `${personalize(body, contact)}\n\n—\nPour ne plus recevoir ces emails : ${unsubUrl}`;
 }
 
 export async function sendEmailBatch(
@@ -123,7 +127,7 @@ export async function sendEmailBatch(
     const unsubUrl = `${base}/unsubscribe?token=${token}`;
     const email: SendEmailInput = {
       to: c.email,
-      subject: payload.subject,
+      subject: personalize(payload.subject, c),
       text: renderBody(payload.body, c, unsubUrl),
       headers: {
         'List-Unsubscribe': `<${unsubUrl}>`,

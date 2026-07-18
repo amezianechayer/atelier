@@ -66,5 +66,19 @@
   "actions.pendingSection": "Waiting for your call",
   "actions.historySection": "History",
   "actions.classLabel": "class",
-  "actions.error": "The decision failed. Try again."
+  "actions.error": "The decision failed. Try again.",
+  "settings.title": "Settings",
+  "settings.subtitle": "Your accounts, your assets: Atelier builds and publishes ON your services, never in your place.",
+  "settings.integrations": "Integrations",
+  "settings.connected": "Connected",
+  "settings.notConnected": "Not connected",
+  "settings.github.help": "Token (repo scope) + target repo \"owner/name\" where the Builder pushes your landing.",
+  "settings.github.tokenLabel": "GitHub token",
+  "settings.github.repoLabel": "Target repo (owner/name)",
+  "settings.vercel.help": "Vercel token: automatic previews, production after your approval.",
+  "settings.vercel.tokenLabel": "Vercel token",
+  "settings.buffer.help": "Facebook/LinkedIn/X publishing via your Buffer account — coming soon. Meanwhile every approved post is ready to copy-paste.",
+  "settings.connect": "Connect",
+  "settings.connectSuccess": "Connected! All your ventures benefit.",
+  "app.openSettings": "Settings"
 }

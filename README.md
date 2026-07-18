@@ -5,9 +5,9 @@ business, une équipe d'agents IA la planifie, la construit, la marchande et l'o
 sur **tes** comptes (GitHub, Vercel, Resend), avec un budget IA plafonné et une file
 d'approbation pour toute action irréversible.
 
-La spécification complète vit dans [SPEC.md](SPEC.md). État actuel : **Phase 4
-(Builder : Claude Code headless en sandbox durcie, landing déployée sur TES comptes
-GitHub + Vercel, préversion auto puis production sur approbation)**.
+La spécification complète vit dans [SPEC.md](SPEC.md). État actuel : **Phase 5
+(Marketer : posts en file d'approbation, prospection email conforme par construction —
+suppression list non contournable, quotas par plan, unsubscribe en un clic)**.
 
 Décris ton idée en 3 lignes → en ~90 secondes ton équipe d'agents produit une étude de
 marché sourcée, un plan de lancement, la mémoire de la venture et un backlog de 10

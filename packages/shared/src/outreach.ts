@@ -13,6 +13,10 @@ export const importContactsInputSchema = z.object({
     .min(1)
     .max(500),
   /** Provenance commune du lot — refus si absente (interdiction des imports non sourcés). */
-  source: z.string().trim().min(3, 'indique la provenance des contacts').max(200),
+  source: z
+    .string('indique la provenance des contacts (obligatoire)')
+    .trim()
+    .min(3, 'indique la provenance des contacts')
+    .max(200),
 });
 export type ImportContactsInput = z.infer<typeof importContactsInputSchema>;
