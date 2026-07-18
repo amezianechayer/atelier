@@ -60,21 +60,25 @@ export default async function VenturesPage() {
             {rows.map((v) => (
               <li key={v.id} className="card reveal">
                 <div className="between">
-                  <strong style={{ fontSize: '1.05rem' }}>{v.name}</strong>
+                  <Link
+                    href={`/ventures/${v.id}`}
+                    style={{
+                      fontFamily: 'var(--serif)',
+                      fontSize: '1.35rem',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {v.name}
+                  </Link>
                   <span className={`tag ${STATUS_TAG[v.status] ?? 'tag'}`}>{v.status}</span>
                 </div>
                 <p className="muted" style={{ margin: '8px 0 14px' }}>
                   {v.pitch}
                 </p>
                 <div className="row" style={{ gap: 8 }}>
-                  <Link className="btn btn-ghost btn-sm" href={`/ventures/${v.id}/chat`}>
-                    🧭 {t(L, 'app.openChat')}
-                  </Link>
-                  <Link className="btn btn-ghost btn-sm" href={`/ventures/${v.id}/missions`}>
-                    📋 {t(L, 'app.openMissions')}
-                  </Link>
-                  <Link className="btn btn-ghost btn-sm" href={`/ventures/${v.id}/actions`}>
-                    🛡️ {t(L, 'app.openActions')}
+                  <Link className="btn btn-sm" href={`/ventures/${v.id}`}>
+                    ▶ {t(L, 'app.openCockpit')}
                   </Link>
                   <Link className="btn btn-ghost btn-sm" href={`/ventures/${v.id}/onboarding`}>
                     ✨ {t(L, 'app.openOnboarding')}
