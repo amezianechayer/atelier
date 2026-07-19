@@ -59,6 +59,7 @@ function Feedback({ state, message }: { state: ConnectState; message: string }) 
 export function SettingsForms(props: {
   github: Record<string, unknown> | null;
   vercel: Record<string, unknown> | null;
+  telegram: Record<string, unknown> | null;
 }) {
   const gh = useConnect('github');
   const vc = useConnect('vercel');
@@ -164,6 +165,8 @@ export function SettingsForms(props: {
         <Feedback state={vc.state} message={vc.message} />
       </section>
 
+      <TelegramCard telegram={props.telegram} />
+
       <section className="card" style={{ opacity: 0.85 }}>
         <div className="between">
           <strong>📣 Buffer (Facebook · LinkedIn · X)</strong>
@@ -174,5 +177,76 @@ export function SettingsForms(props: {
         </p>
       </section>
     </div>
+  );
+}
+
+function TelegramCard({ telegram }: { telegram: Record<string, unknown> | null }) {
+  const [command, setCommand] = useState('');
+  const [state, setState] = useState<ConnectState>('idle');
+  const linked = typeof telegram?.chatId === 'string';
+  const username = typeof telegram?.username === 'string' ? String(telegram.username) : null;
+
+  async function generate() {
+    setState('saving');
+    const res = await fetch('/api/v1/integrations/telegram/link-code', { method: 'POST' });
+    if (res.ok) {
+      const body = (await res.json()) as { command: string };
+      setCommand(body.command);
+      setState('done');
+    } else {
+      setState('error');
+    }
+  }
+
+  return (
+    <section className="card">
+      <div className="between">
+        <strong>✈️ Telegram</strong>
+        <StatusTag connected={linked} />
+      </div>
+      <p className="muted" style={{ margin: '6px 0 14px', fontSize: '0.9rem' }}>
+        {t(L, 'settings.telegram.help')}
+        {linked && username && (
+          <>
+            {' '}
+            — compte <strong>@{username}</strong>
+          </>
+        )}
+      </p>
+      <div>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={generate}
+          disabled={state === 'saving'}
+        >
+          {state === 'saving' ? t(L, 'common.loading') : t(L, 'settings.telegram.generate')}
+        </button>
+      </div>
+      {command !== '' && (
+        <div style={{ marginTop: 12 }}>
+          <p className="muted" style={{ margin: '0 0 6px', fontSize: '0.85rem' }}>
+            {t(L, 'settings.telegram.codeHint')}
+          </p>
+          <code
+            className="mono"
+            style={{
+              display: 'inline-block',
+              border: '1px solid var(--line-strong)',
+              padding: '6px 12px',
+              fontSize: '1rem',
+              userSelect: 'all',
+            }}
+          >
+            {command}
+          </code>
+        </div>
+      )}
+      {state === 'error' && (
+        <p role="alert" style={{ margin: '10px 0 0', color: 'var(--danger)' }}>
+          {t(L, 'error.generic')}
+        </p>
+      )}
+    </section>
   );
 }

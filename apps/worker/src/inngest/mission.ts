@@ -99,7 +99,14 @@ export const missionRun = inngest.createFunction(
         pitch: row.pitch,
       };
     });
-    if (!loaded) return { missionId, status: 'skipped' };
+    if (!loaded) {
+      // Déjà traitée : signale quand même la fin de travail (le cycle nocturne ne doit pas attendre).
+      await step.sendEvent('signaler-deja-traitee', {
+        name: 'mission.settled',
+        data: { missionId, status: 'skipped' },
+      });
+      return { missionId, status: 'skipped' };
+    }
     const { ventureId } = loaded;
 
     // Exécution de l'agent — usage métré à chaque appel, coupure nette si dépassement.
@@ -181,7 +188,13 @@ export const missionRun = inngest.createFunction(
         throw err;
       }
     });
-    if (execution.killed) return { missionId, status: 'budget_exceeded' };
+    if (execution.killed) {
+      await step.sendEvent('signaler-budget-depasse', {
+        name: 'mission.settled',
+        data: { missionId, ventureId, status: 'budget_exceeded' },
+      });
+      return { missionId, status: 'budget_exceeded' };
+    }
 
     // Auto-exécution des actions sans approbation (classe A/B : deploy_preview auto + notif).
     const autoFailure = await step.run('auto-executer', async () => {
@@ -245,6 +258,10 @@ export const missionRun = inngest.createFunction(
         endedAt: new Date(),
         resultSummary: `Échec d'exécution de ${autoFailure.kind} : ${autoFailure.message}`,
       });
+      await step.sendEvent('signaler-echec-auto', {
+        name: 'mission.settled',
+        data: { missionId, ventureId, status: 'failed' },
+      });
       return { missionId, status: 'failed' };
     }
 
@@ -264,6 +281,27 @@ export const missionRun = inngest.createFunction(
         await setMissionStatus(ventureId, missionId, 'awaiting_approval');
       }
       return rows;
+    });
+
+    // Le travail d'agent est terminé et les actions sont empilées : on fige le coût
+    // et on le signale (le cycle nocturne enchaîne ici, sans attendre les décisions).
+    await step.run('figer-cout', async () => {
+      const [spent] = await db
+        .select({ total: sql<string>`coalesce(sum(${usageRecords.costUsd}), 0)` })
+        .from(usageRecords)
+        .where(eq(usageRecords.missionId, missionId));
+      await db
+        .update(missions)
+        .set({ costActualUsd: Number(spent?.total ?? 0).toFixed(4) })
+        .where(eq(missions.id, missionId));
+    });
+    await step.sendEvent('signaler-travail-fini', {
+      name: 'mission.settled',
+      data: {
+        missionId,
+        ventureId,
+        status: pendingC.length > 0 ? 'awaiting_approval' : 'done',
+      },
     });
 
     for (const pending of pendingC) {

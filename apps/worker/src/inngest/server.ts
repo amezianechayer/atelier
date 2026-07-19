@@ -3,9 +3,10 @@ import { serve } from 'inngest/node';
 import { chatMessage } from './chat';
 import { inngest } from './client';
 import { missionRun } from './mission';
+import { nightshiftCycle, nightshiftTick } from './nightshift';
 import { ventureOnboard } from './onboard';
 
-export const functions = [ventureOnboard, chatMessage, missionRun];
+export const functions = [ventureOnboard, chatMessage, missionRun, nightshiftTick, nightshiftCycle];
 
 /** Endpoint Inngest du worker — le dev server compose pointe sur host:3111 (Phase 0). */
 export const INNGEST_PORT = 3111;

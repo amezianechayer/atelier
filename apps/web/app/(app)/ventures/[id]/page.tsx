@@ -7,6 +7,7 @@ import {
   memoryDocs,
   messages,
   missions,
+  nightCycles,
   outreachContacts,
   usageRecords,
   ventures,
@@ -111,6 +112,18 @@ export default async function CockpitPage({ params }: { params: Promise<{ id: st
       .where(and(eq(conversations.ventureId, id), eq(conversations.channel, 'web'))),
   ]);
 
+  const [lastCycle] = await db
+    .select({
+      briefMd: nightCycles.briefMd,
+      spentUsd: nightCycles.spentUsd,
+      budgetUsd: nightCycles.budgetUsd,
+      endedAt: nightCycles.endedAt,
+    })
+    .from(nightCycles)
+    .where(eq(nightCycles.ventureId, id))
+    .orderBy(desc(nightCycles.startedAt))
+    .limit(1);
+
   const chatHistory = conversation
     ? await db
         .select({ id: messages.id, role: messages.role, content: messages.content })
@@ -152,6 +165,21 @@ export default async function CockpitPage({ params }: { params: Promise<{ id: st
       budget={{
         spentUsd: Number(spent?.total ?? 0),
         monthlyLimitUsd: Number(budget?.monthlyLimitUsd ?? 0),
+      }}
+      night={{
+        enabled: venture.nightShiftEnabled,
+        hourLocal: venture.nightShiftHourLocal,
+        timezone: venture.timezone,
+        briefChannel: venture.briefChannel,
+        nightLimitUsd: Number(budget?.nightLimitUsd ?? 0),
+        lastCycle: lastCycle
+          ? {
+              briefMd: lastCycle.briefMd,
+              spentUsd: Number(lastCycle.spentUsd),
+              budgetUsd: Number(lastCycle.budgetUsd),
+              endedAt: lastCycle.endedAt?.toISOString() ?? null,
+            }
+          : null,
       }}
       docs={docs}
       contacts={{ total: contactStats?.total ?? 0, contacted: contactStats?.contacted ?? 0 }}

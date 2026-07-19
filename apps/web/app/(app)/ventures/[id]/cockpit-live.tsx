@@ -99,8 +99,14 @@ function lineFromLedger(e: LedgerSeedEvent): string | null {
     }
     case 'integration':
       return `intégration ${str(p.kind)} connectée`;
-    case 'night_cycle':
-      return 'night shift';
+    case 'night_cycle': {
+      const phase = str(p.phase);
+      if (phase === 'start')
+        return `night shift · départ (plafond ${Number(p.budgetUsd ?? 0).toFixed(2)} $)`;
+      if (phase === 'end')
+        return `night shift · fin — ${Number(p.spentUsd ?? 0).toFixed(2)} $ dépensés, ${Number(p.pendingActions ?? 0)} à approuver`;
+      return `night shift · ${phase || 'cycle'}`;
+    }
     default:
       return null;
   }
@@ -130,6 +136,10 @@ function lineFromStream(e: Record<string, unknown>): string | null {
     }
     case 'chat.done':
       return 'CEO · réponse envoyée';
+    case 'night.cycle':
+      return `night shift · départ (plafond ${Number(e.budgetUsd ?? 0).toFixed(2)} $, ${Number(e.missions ?? 0)} missions)`;
+    case 'night.brief':
+      return `☀️ brief du matin envoyé (${str(e.via)}) — ${Number(e.spentUsd ?? 0).toFixed(2)} $ / ${Number(e.budgetUsd ?? 0).toFixed(2)} $`;
     case 'onboarding.started':
       return 'onboarding · démarré';
     case 'onboarding.section':
@@ -161,6 +171,19 @@ export function CockpitLive(props: {
   missions: MissionItem[];
   actions: ActionItem[];
   budget: { spentUsd: number; monthlyLimitUsd: number };
+  night: {
+    enabled: boolean;
+    hourLocal: number;
+    timezone: string;
+    briefChannel: 'web' | 'telegram' | 'email';
+    nightLimitUsd: number;
+    lastCycle: {
+      briefMd: string | null;
+      spentUsd: number;
+      budgetUsd: number;
+      endedAt: string | null;
+    } | null;
+  };
   docs: Array<{ slug: string; version: number; updatedAt: string }>;
   contacts: { total: number; contacted: number };
   site: { productionUrl: string | null; previewUrl: string | null };
@@ -206,6 +229,26 @@ export function CockpitLive(props: {
       setActionItems(body.actions);
     }
   }, [vid]);
+
+  // ---- Night shift ----
+  const [nsEnabled, setNsEnabled] = useState(props.night.enabled);
+  const [nsHour, setNsHour] = useState(props.night.hourLocal);
+  const [nsChannel, setNsChannel] = useState<string>(props.night.briefChannel);
+  const [nsState, setNsState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  async function saveNight() {
+    setNsState('saving');
+    const res = await fetch(`/api/v1/ventures/${props.venture.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nightShiftEnabled: nsEnabled,
+        nightShiftHourLocal: nsHour,
+        briefChannel: nsChannel,
+      }),
+    });
+    setNsState(res.ok ? 'saved' : 'error');
+  }
 
   // ---- Chat ----
   const [history, setHistory] = useState<ChatMessage[]>(props.initialMessages);
@@ -394,6 +437,106 @@ export function CockpitLive(props: {
                   <span>{limit.toFixed(2)} $</span>
                 </div>
               </div>
+            </section>
+
+            <section className="panel">
+              <h3 className="panel-title">🌙 {t(L, 'cockpit.night.title')}</h3>
+              <label
+                className="row"
+                htmlFor="ns-on"
+                style={{ gap: 8, textTransform: 'none', letterSpacing: 0, fontSize: '0.9rem' }}
+              >
+                <input
+                  id="ns-on"
+                  type="checkbox"
+                  checked={nsEnabled}
+                  onChange={(e) => setNsEnabled(e.target.checked)}
+                  style={{ width: 'auto' }}
+                />
+                {t(L, 'cockpit.night.enable')}
+              </label>
+              <dl style={{ margin: 0 }}>
+                <div className="stat">
+                  <dt>{t(L, 'cockpit.night.hour')}</dt>
+                  <dd>
+                    <select
+                      value={nsHour}
+                      onChange={(e) => setNsHour(Number(e.target.value))}
+                      className="mono"
+                    >
+                      {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+                        <option key={`h${h}`} value={h}>
+                          {String(h).padStart(2, '0')}:00
+                        </option>
+                      ))}
+                    </select>{' '}
+                    <span className="muted">{props.night.timezone}</span>
+                  </dd>
+                </div>
+                <div className="stat">
+                  <dt>{t(L, 'cockpit.night.channel')}</dt>
+                  <dd>
+                    <select
+                      value={nsChannel}
+                      onChange={(e) => setNsChannel(e.target.value)}
+                      className="mono"
+                    >
+                      <option value="web">{t(L, 'cockpit.night.channelWeb')}</option>
+                      <option value="telegram">{t(L, 'cockpit.night.channelTelegram')}</option>
+                    </select>
+                  </dd>
+                </div>
+                <div className="stat">
+                  <dt>{t(L, 'cockpit.night.limit')}</dt>
+                  <dd>{props.night.nightLimitUsd.toFixed(2)} $</dd>
+                </div>
+              </dl>
+              <div className="row">
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={saveNight}
+                  disabled={nsState === 'saving'}
+                >
+                  {nsState === 'saving' ? t(L, 'common.loading') : t(L, 'common.save')}
+                </button>
+                {nsState === 'saved' && (
+                  <span className="mono" style={{ color: 'var(--ok)' }}>
+                    {t(L, 'common.saved')}
+                  </span>
+                )}
+                {nsState === 'error' && (
+                  <span className="mono" style={{ color: 'var(--danger)' }}>
+                    {t(L, 'error.generic')}
+                  </span>
+                )}
+              </div>
+              {props.night.lastCycle?.briefMd ? (
+                <details>
+                  <summary className="mono muted" style={{ cursor: 'pointer' }}>
+                    ☀️ {t(L, 'cockpit.night.lastBrief')} —{' '}
+                    {props.night.lastCycle.spentUsd.toFixed(2)} $ /{' '}
+                    {props.night.lastCycle.budgetUsd.toFixed(2)} $
+                  </summary>
+                  <pre
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'inherit',
+                      fontSize: '0.86rem',
+                      margin: '8px 0 0',
+                      background: 'var(--card)',
+                      border: '1px solid var(--line-strong)',
+                      padding: 12,
+                    }}
+                  >
+                    {props.night.lastCycle.briefMd}
+                  </pre>
+                </details>
+              ) : (
+                <p className="muted" style={{ margin: 0, fontSize: '0.86rem' }}>
+                  {t(L, 'cockpit.night.none')}
+                </p>
+              )}
             </section>
 
             <section className="panel">

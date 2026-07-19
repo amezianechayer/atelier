@@ -24,8 +24,10 @@ Règle : SPEC.md §15.5 — les noms/versions de la spec sont indicatifs, la doc
 | @testcontainers/postgresql | 12.0.4 | installé en Phase 1 |
 | PostgreSQL | 16 (image pgvector/pgvector:pg16) | conforme spec |
 
+Épinglée en Phase 6 : grammy 1.45.0 (vérifiée le 2026-07-19 sur grammy.dev, ADR 0007).
+
 À vérifier au moment de leur phase : inngest 4.x (P2), better-auth 1.6.x (P1),
-ai (Vercel AI SDK) 7.x (P2), grammy 1.44 (P6), dockerode 5.x (P4), Stripe (P8),
+ai (Vercel AI SDK) 7.x (P2), dockerode 5.x (P4), Stripe (P8),
 flags headless Claude Code sur code.claude.com/docs (P4).
 
 ## Divergences avec la spec

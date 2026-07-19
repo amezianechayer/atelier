@@ -3,6 +3,7 @@ import { and, asc, desc, eq } from 'drizzle-orm';
 import { chatReply } from '../agents/ceo';
 import { createDeltaBuffer, publish } from '../notify';
 import { getRuntime } from '../runtime';
+import { sendTelegramText } from '../telegram';
 import { inngest } from './client';
 
 /**
@@ -27,7 +28,11 @@ export const chatMessage = inngest.createFunction(
       const [venture] = await db.select().from(ventures).where(eq(ventures.id, ventureId));
       if (!venture) throw new Error(`venture ${ventureId} introuvable`);
       const [conversation] = await db
-        .select({ id: conversations.id })
+        .select({
+          id: conversations.id,
+          channel: conversations.channel,
+          externalChatId: conversations.externalChatId,
+        })
         .from(conversations)
         .where(and(eq(conversations.id, conversationId), eq(conversations.ventureId, ventureId)));
       if (!conversation) throw new Error(`conversation ${conversationId} introuvable`);
@@ -65,6 +70,11 @@ export const chatMessage = inngest.createFunction(
 
       await db.insert(messages).values({ conversationId, role: 'ceo', content: text });
       await publish(db, ventureId, { type: 'chat.done', conversationId, costUsd });
+
+      // Conversation Telegram : la réponse part aussi sur le téléphone (Phase 6).
+      if (conversation.channel === 'telegram' && conversation.externalChatId) {
+        await sendTelegramText(conversation.externalChatId, text);
+      }
     });
 
     return { conversationId, status: 'done' };

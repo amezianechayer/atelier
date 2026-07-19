@@ -103,5 +103,19 @@
   "cockpit.approvals": "To approve",
   "cockpit.approvalsEmpty": "Nothing awaits your call. 😌",
   "cockpit.chatTitle": "Your CEO",
-  "cockpit.chatHint": "They know your plan, memory and budget."
+  "cockpit.chatHint": "They know your plan, memory and budget.",
+  "common.save": "Save",
+  "common.saved": "Saved ✓",
+  "settings.telegram.help": "Your CEO in your pocket: chat, morning brief and one-tap approvals. Generate a code then send the command to your bot.",
+  "settings.telegram.generate": "Generate a link code",
+  "settings.telegram.codeHint": "Send this command to your Telegram bot (valid 15 minutes):",
+  "cockpit.night.title": "Night shift",
+  "cockpit.night.enable": "Work while you sleep",
+  "cockpit.night.hour": "Local start hour",
+  "cockpit.night.channel": "Morning brief channel",
+  "cockpit.night.limit": "Night cap",
+  "cockpit.night.lastBrief": "Last brief",
+  "cockpit.night.none": "No cycle yet: enable the night shift, your team works tonight and you read the brief at breakfast.",
+  "cockpit.night.channelWeb": "Web (cockpit)",
+  "cockpit.night.channelTelegram": "Telegram"
 }

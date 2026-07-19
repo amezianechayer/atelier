@@ -32,6 +32,13 @@ export {
   verifyChain,
 } from './ledger';
 export {
+  DEFAULT_MAX_NIGHT_MISSIONS,
+  DEFAULT_MISSION_ESTIMATE_USD,
+  type NightMissionCandidate,
+  type NightPlan,
+  planNightCycle,
+} from './nightshift';
+export {
   type ContactStatus,
   enforcePlanQuota,
   type FilterSendableInput,

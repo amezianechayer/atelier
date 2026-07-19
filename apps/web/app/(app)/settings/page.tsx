@@ -40,6 +40,7 @@ export default async function SettingsPage() {
       <SettingsForms
         github={latest.has('github') ? (latest.get('github') ?? {}) : null}
         vercel={latest.has('vercel') ? (latest.get('vercel') ?? {}) : null}
+        telegram={latest.has('telegram') ? (latest.get('telegram') ?? {}) : null}
       />
     </main>
   );

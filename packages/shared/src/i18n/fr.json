@@ -103,5 +103,19 @@
   "cockpit.approvals": "À approuver",
   "cockpit.approvalsEmpty": "Rien n'attend ton accord. 😌",
   "cockpit.chatTitle": "Ton CEO",
-  "cockpit.chatHint": "Il connaît ton plan, ta mémoire et ton budget."
+  "cockpit.chatHint": "Il connaît ton plan, ta mémoire et ton budget.",
+  "common.save": "Enregistrer",
+  "common.saved": "Enregistré ✓",
+  "settings.telegram.help": "Ton CEO dans ta poche : chat, brief du matin et approbations en un tap. Génère un code puis envoie la commande à ton bot.",
+  "settings.telegram.generate": "Générer un code de liaison",
+  "settings.telegram.codeHint": "Envoie cette commande à ton bot Telegram (valable 15 minutes) :",
+  "cockpit.night.title": "Night shift",
+  "cockpit.night.enable": "Travailler pendant que tu dors",
+  "cockpit.night.hour": "Heure locale de départ",
+  "cockpit.night.channel": "Canal du brief du matin",
+  "cockpit.night.limit": "Plafond nuit",
+  "cockpit.night.lastBrief": "Dernier brief",
+  "cockpit.night.none": "Aucun cycle pour l'instant : active la night shift, ton équipe bossera cette nuit et tu liras le brief au réveil.",
+  "cockpit.night.channelWeb": "Web (cockpit)",
+  "cockpit.night.channelTelegram": "Telegram"
 }
